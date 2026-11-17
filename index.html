@@ -1,0 +1,909 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>盗聴と暗号体験</title>
+<script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<style>
+:root{
+  --bg:#f6f7f9; --card:#ffffff; --text:#1d2330; --muted:#5d6675; --line:#dde1e7;
+  --me:#2557c7; --me-soft:#e3ebfd; --eve:#b42318; --eve-soft:#fde8e6; --peer:#7c3aed; --peer-soft:#efe7fe;
+  --warn:#b45309; --warn-soft:#fdf0dc; --ok:#15803d; --ok-soft:#e3f6e8; --code-bg:#f0f2f5;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#14171c; --card:#1e2229; --text:#e7eaf0; --muted:#9aa3b2; --line:#323844;
+    --me:#7ea6ff; --me-soft:#1c2b4d; --eve:#ff8a7a; --eve-soft:#3d1f1c; --peer:#b794ff; --peer-soft:#2d2347;
+    --warn:#f59e0b; --warn-soft:#3a2a12; --ok:#4ade80; --ok-soft:#173a24; --code-bg:#171a20;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#14171c; --card:#1e2229; --text:#e7eaf0; --muted:#9aa3b2; --line:#323844;
+  --me:#7ea6ff; --me-soft:#1c2b4d; --eve:#ff8a7a; --eve-soft:#3d1f1c; --peer:#b794ff; --peer-soft:#2d2347;
+  --warn:#f59e0b; --warn-soft:#3a2a12; --ok:#4ade80; --ok-soft:#173a24; --code-bg:#171a20;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);
+  font-family:"BIZ UDPGothic","Hiragino Sans","Yu Gothic UI","Meiryo",sans-serif;line-height:1.6}
+main{max-width:1040px;margin:0 auto;padding:20px 16px 48px}
+h1{font-size:1.5rem;margin:8px 0 4px}
+h2{font-size:1.1rem;margin:0 0 10px}
+h3{font-size:1rem;margin:12px 0 6px}
+p{margin:0 0 10px}
+.muted{color:var(--muted);font-size:.9rem}
+.note{font-size:.82rem;color:var(--muted)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:16px}
+button{font:inherit;border:0;border-radius:8px;padding:10px 16px;cursor:pointer;font-weight:700}
+button.sm{padding:4px 10px;font-size:.85rem}
+button:disabled{opacity:.45;cursor:not-allowed}
+.btn-main{background:var(--me);color:#fff}
+.btn-eve{background:var(--eve);color:#fff}
+.btn-warn{background:var(--warn);color:#fff}
+.btn-ghost{background:transparent;border:1px solid var(--line);color:var(--text);font-weight:400}
+:root[data-theme="dark"] .btn-main,:root[data-theme="dark"] .btn-eve,:root[data-theme="dark"] .btn-warn{color:#0b0d10}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .btn-main,:root:not([data-theme="light"]) .btn-eve,:root:not([data-theme="light"]) .btn-warn{color:#0b0d10}}
+input{font:inherit;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--text);width:100%}
+label{display:block;font-size:.9rem;color:var(--muted);margin-bottom:4px}
+.row{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap}
+.row > .grow{flex:1 1 180px}
+.roles{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.role{border:2px solid var(--line);border-radius:12px;padding:20px;text-align:left;background:var(--card);color:var(--text);font-weight:400}
+.role strong{display:block;font-size:1.2rem;margin-bottom:6px}
+.role.e{border-color:var(--eve)} .role.e strong{color:var(--eve)}
+.role.c{border-color:var(--me)} .role.c strong{color:var(--me)}
+.role.r{border-color:var(--peer)} .role.r strong{color:var(--peer)}
+.roles.three{grid-template-columns:repeat(3,1fr)}
+@media (max-width:760px){.roles.three{grid-template-columns:1fr}}
+.badge.r{background:var(--peer-soft);color:var(--peer)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media (max-width:760px){.roles,.grid2{grid-template-columns:1fr}}
+.badge{display:inline-block;padding:2px 10px;border-radius:999px;font-size:.85rem;font-weight:700}
+.badge.e{background:var(--eve-soft);color:var(--eve)}
+.badge.c{background:var(--me-soft);color:var(--me)}
+.mono{font-family:ui-monospace,"Cascadia Mono",Consolas,monospace}
+.ip{font-size:2rem;font-weight:800;font-variant-numeric:tabular-nums;line-height:1.2;
+  font-family:ui-monospace,"Cascadia Mono",Consolas,monospace;overflow-wrap:anywhere}
+.ip.e{color:var(--eve)} .ip.c{color:var(--me);font-size:1.3rem}
+.status{font-weight:700}
+.status.on{color:var(--ok)} .status.off{color:var(--eve)} .status.wait{color:var(--warn)}
+/* 暗号方式の選択 */
+.modes{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+@media (max-width:760px){.modes{grid-template-columns:1fr 1fr}}
+.mode{border:2px solid var(--line);border-radius:10px;padding:10px;background:var(--bg);color:var(--text);text-align:left;font-weight:400}
+.mode b{display:block;font-size:.95rem}
+.mode small{color:var(--muted);font-size:.78rem}
+.mode.sel{border-color:var(--me);background:var(--me-soft)}
+.mtag{display:inline-block;font-size:.75rem;font-weight:700;padding:1px 8px;border-radius:999px;background:var(--code-bg);color:var(--muted)}
+.mtag.plain{background:var(--eve-soft);color:var(--eve)}
+.mtag.caesar{background:var(--warn-soft);color:var(--warn)}
+.mtag.aes{background:var(--me-soft);color:var(--me)}
+.mtag.rsa{background:var(--ok-soft);color:var(--ok)}
+.keybox{background:var(--bg);border-radius:10px;padding:12px;margin-top:12px}
+code.blk{display:block;background:var(--code-bg);padding:6px 8px;border-radius:6px;white-space:pre-wrap;word-break:break-all;
+  font-family:ui-monospace,"Cascadia Mono",Consolas,monospace;font-size:.8rem}
+/* ログ・一覧 */
+ul.log,ul.list{list-style:none;margin:0;padding:0;max-height:360px;overflow-y:auto}
+ul.log li{padding:6px 8px;border-left:4px solid var(--line);margin-bottom:4px;font-size:.92rem;background:var(--bg);border-radius:0 6px 6px 0;overflow-wrap:anywhere}
+ul.log li time{color:var(--muted);font-size:.8rem;margin-right:8px;font-variant-numeric:tabular-nums}
+ul.log li.in{border-left-color:var(--peer)}
+ul.log li.out{border-left-color:var(--me)}
+ul.log li.sys{border-left-color:var(--muted)}
+ul.log li.warn{border-left-color:var(--warn);background:var(--warn-soft)}
+ul.log li.err{border-left-color:var(--eve);background:var(--eve-soft)}
+ul.list li{padding:8px 10px;border-bottom:1px solid var(--line);overflow-wrap:anywhere}
+ul.list li:last-child{border-bottom:0}
+ul.list li.mine{background:var(--me-soft);border-radius:6px}
+ul.list li.sysmsg{background:var(--warn-soft);border-radius:6px}
+.meta{font-size:.8rem;color:var(--muted)}
+.empty{color:var(--muted);font-size:.9rem;padding:8px 0}
+.plain-out{font-weight:700}
+.fail{color:var(--eve);font-weight:700}
+.okc{color:var(--ok);font-weight:700}
+/* パケット表 */
+.pkt-wrap{max-height:440px;overflow:auto;border:1px solid var(--line);border-radius:8px}
+table.pkt{width:100%;border-collapse:collapse;font-size:.85rem}
+table.pkt th,table.pkt td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+table.pkt th{position:sticky;top:0;background:var(--card);font-weight:700;white-space:nowrap;z-index:1}
+table.pkt td.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+table.pkt td.addr{white-space:nowrap}
+table.pkt tr.rx td.dir{color:var(--peer);font-weight:700;white-space:nowrap}
+table.pkt tr.tx td.dir{color:var(--me);font-weight:700;white-space:nowrap}
+table.pkt tr.sel td{background:var(--eve-soft)}
+table.pkt code{display:block;background:var(--code-bg);padding:4px 6px;border-radius:4px;white-space:pre-wrap;word-break:break-all;
+  font-family:ui-monospace,"Cascadia Mono",Consolas,monospace;font-size:.8rem;max-width:400px;max-height:120px;overflow:auto}
+@media (max-width:760px){ table.pkt code{max-width:200px} }
+/* 総当たり */
+ol.brute{margin:6px 0;padding-left:2.6em;max-height:340px;overflow:auto;background:var(--bg);border-radius:8px;padding-top:6px;padding-bottom:6px}
+ol.brute li{padding:2px 6px;overflow-wrap:anywhere}
+ol.brute li::marker{color:var(--muted);font-variant-numeric:tabular-nums}
+details{margin-top:8px}
+summary{cursor:pointer;font-weight:700}
+details ol,details ul{padding-left:1.4em;margin:8px 0}
+table.cmp{border-collapse:collapse;font-size:.9rem;margin:8px 0;width:100%}
+table.cmp th,table.cmp td{border:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top}
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+[hidden]{display:none !important}
+</style>
+</head>
+<body>
+<main>
+
+<!-- ===== 最初の画面 ===== -->
+<section id="home" class="screen">
+  <h1>盗聴と暗号体験</h1>
+  <p class="muted">3人1組で、<b>送信者・受信者・盗聴者</b>に分かれよう。送信者のメッセージは、必ず盗聴者のところを通って受信者に届きます。暗号で秘密を守れるか試そう。</p>
+  <div class="roles three" style="margin:16px 0">
+    <button class="role c" id="goSender"><strong>📤 送信者になる</strong>暗号方式を選んで、秘密のメッセージを受信者に送る。</button>
+    <button class="role r" id="goReceiver"><strong>📥 受信者になる</strong>届いたメッセージを、自分の鍵で元に戻して（復号して）読む。</button>
+    <button class="role e" id="goEve"><strong>🕵️ 盗聴者（ルータ役）になる</strong>送信者と受信者の通信を中継する。通り道を流れるデータは全部見える。</button>
+  </div>
+  <div class="card">
+    <details>
+      <summary>先生向け：授業の流れ（例）</summary>
+      <ol>
+        <li>3人1組をつくり、送信者・受信者・盗聴者を決める。盗聴者が「ルータを起動」を押し、表示されたIPアドレスを送信者と受信者に伝える。</li>
+        <li><b>① 暗号化なし</b>：送信者がメッセージを送る。盗聴者の画面に何が見えるか？</li>
+        <li><b>② シーザー暗号</b>：送信者と受信者で「ずらす数（鍵）」を<b>盗聴者に聞こえないように</b>決めて、それぞれ設定する。盗聴者は「解読」ボタンの<b>総当たり</b>で解けるか試す。</li>
+        <li><b>③ 共通鍵暗号</b>：送信者と受信者で合言葉を決めて、それぞれ設定する。盗聴者は解読できるか？ 次に、送信者が「合言葉をチャットで受信者に送る」を使ってみる。盗聴者はどうなる？（<b>鍵配送問題</b>）</li>
+        <li><b>④ 公開鍵暗号</b>：受信者が「鍵ペアを作って公開鍵を送信者に送る」を押す。送信者は受信者の公開鍵で暗号化して送る。盗聴者は公開鍵を盗めるが、解読できるか？</li>
+        <li>役割を交代して、もう一度体験する（3人全員が3つの役を体験できる）。</li>
+      </ol>
+      <p><b>4つの方式のまとめ</b></p>
+      <table class="cmp">
+        <tr><th>方式</th><th>盗聴者は読める？</th><th>弱点・課題</th></tr>
+        <tr><td>① 暗号化なし</td><td>そのまま読める</td><td>通り道の誰にでも読まれる</td></tr>
+        <tr><td>② シーザー暗号</td><td>総当たりですぐ解ける</td><td>鍵の種類が25通りしかない</td></tr>
+        <tr><td>③ 共通鍵暗号（AES）</td><td>鍵がなければ読めない</td><td>鍵を相手にどう渡すか（鍵配送問題）</td></tr>
+        <tr><td>④ 公開鍵暗号（RSA）</td><td>公開鍵を盗んでも読めない</td><td>処理が重い → 実際のHTTPSでは③と④を組み合わせる</td></tr>
+      </table>
+      <p><b>考えさせたい問い</b></p>
+      <ul>
+        <li>シーザー暗号の鍵が25通りではなく1兆通りあったら、総当たりで解けるか？</li>
+        <li>③で、合言葉を安全に相手に渡すにはどうすればよいか？ 会ったことのない相手（ネットショップなど）だったら？</li>
+        <li>④で、公開鍵を誰に見られても大丈夫なのはなぜか？ 秘密鍵は一度でも通信路を流れたか？</li>
+        <li>Webサイトの🔒マーク（HTTPS）では、どの方式が使われているか？</li>
+      </ul>
+    </details>
+    <details>
+      <summary>この教材の暗号について</summary>
+      <ul>
+        <li>② シーザー暗号は、ひらがな・カタカナ・漢字・英数字を、それぞれの文字の並びの中で指定した数だけずらします。</li>
+        <li>③ 共通鍵暗号は、ブラウザに組み込まれた本物の <b>AES-256-GCM</b>（合言葉から PBKDF2 で鍵を作成）です。</li>
+        <li>④ 公開鍵暗号は、ブラウザに組み込まれた本物の <b>RSA-OAEP 2048ビット</b>です。1回に送れるのは全角60文字程度までです。</li>
+        <li>IPアドレスは教材の中だけで使う仮想のものです。メッセージはどこにも保存されず、ページを閉じると消えます。</li>
+      </ul>
+    </details>
+    <details>
+      <summary>つながらないときは</summary>
+      <ul>
+        <li>Chrome か Edge の最新版を使ってください。</li>
+        <li>最初の接続だけ、インターネット上の仲介サーバ（PeerJS）を使います。校内ネットワークのフィルタで止められていると接続できません。</li>
+      </ul>
+    </details>
+  </div>
+</section>
+
+<!-- ===== 盗聴者（ルータ）画面 ===== -->
+<section id="eve" class="screen" hidden>
+  <div class="topbar">
+    <h1><span class="badge e">盗聴者（ルータ役）</span> 通り道のデータは全部見える</h1>
+    <button class="btn-ghost" data-back>最初の画面へ</button>
+  </div>
+  <div class="card">
+    <div class="row" style="justify-content:space-between;align-items:center">
+      <div>
+        <div class="muted">ルータのIPアドレス（送信者と受信者に伝えよう）</div>
+        <div class="ip e" id="eIp">---.---.---.---</div>
+        <div>状態：<span class="status wait" id="eStatus">停止中</span></div>
+      </div>
+      <div class="row">
+        <button class="btn-eve" id="eStart">ルータを起動</button>
+        <button class="btn-ghost" id="eStop" disabled>ルータを停止</button>
+      </div>
+    </div>
+    <p class="note" style="margin-top:10px">送信者と受信者の通信は、必ずこのルータを通ります。公衆Wi-Fiのルータが乗っ取られている状況をイメージしよう。（教材内の仮想IPアドレスです）</p>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <h2>👥 中継している送信者・受信者 <span id="eCount">0</span>/2人</h2>
+      <ul class="list" id="eComms"></ul>
+      <div class="empty" id="eCommsEmpty">まだ誰も接続していません</div>
+    </div>
+    <div class="card">
+      <h2>🔑 盗み取った鍵</h2>
+      <h3>合言葉（共通鍵）</h3>
+      <ul class="list" id="ePass"></ul>
+      <div class="empty" id="ePassEmpty">まだありません</div>
+      <h3>公開鍵</h3>
+      <ul class="list" id="ePub"></ul>
+      <div class="empty" id="ePubEmpty">まだありません</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="topbar" style="margin-bottom:8px">
+      <h2 style="margin:0">📦 盗聴したパケット（新しい順）</h2>
+      <div class="row"><span class="muted"><span id="eCnt">0</span>件</span><button class="btn-ghost" id="eCsv">CSVで保存</button></div>
+    </div>
+    <div class="pkt-wrap"><table class="pkt">
+      <thead><tr><th>No.</th><th>時刻</th><th>送信元IP</th><th>宛先IP</th><th>種類</th><th>暗号</th><th>データ（中身）</th><th>サイズ</th><th>解読</th></tr></thead>
+      <tbody id="eBody"></tbody></table>
+      <div class="empty" id="eEmpty" style="padding:10px">まだ通信はありません</div></div>
+  </div>
+
+  <div class="card" id="eCrack">
+    <h2>🔓 解読ルーム</h2>
+    <div id="eCrackBody" class="muted">上の表で、暗号化されたメッセージの「解読」ボタンを押そう。</div>
+  </div>
+
+  <div class="card">
+    <h2>📜 できごとログ（新しい順）</h2>
+    <ul class="log" id="eLog"></ul>
+  </div>
+</section>
+
+<!-- ===== 通信者画面 ===== -->
+<section id="comm" class="screen" hidden>
+  <div class="topbar">
+    <h1><span class="badge c" id="cBadge">送信者</span> <span id="cTitle">ルータに接続しよう</span></h1>
+    <button class="btn-ghost" data-back>最初の画面へ</button>
+  </div>
+
+  <div class="card" id="cLogin">
+    <div class="row">
+      <div class="grow"><label for="cName">あなたの名前（ニックネーム）</label><input id="cName" maxlength="20" autocomplete="off"></div>
+      <div style="flex:0 1 220px"><label for="cRouter">ルータのIPアドレス</label><input id="cRouter" class="mono" inputmode="decimal" maxlength="15" placeholder="例：192.168.23.1" autocomplete="off"></div>
+      <button class="btn-main" id="cConnect">接続する</button>
+    </div>
+    <p class="muted" style="margin-top:8px">状態：<span class="status wait" id="cStatus">未接続</span></p>
+  </div>
+
+  <div id="cMain" hidden>
+    <div class="card">
+      <div class="row" style="justify-content:space-between;align-items:flex-start">
+        <div><div class="muted">あなたのIPアドレス</div><div class="ip c" id="cMyIp">-</div></div>
+        <div><div class="muted" id="cPeerLabel">受信者</div><div class="ip c" id="cPeer" style="color:var(--peer)">まだいません</div></div>
+        <div><div class="muted">経由するルータ</div><div class="ip c" id="cRouterIp" style="color:var(--eve)">-</div></div>
+      </div>
+      <p class="note" style="margin-top:8px">⚠️ 送信者と受信者の通信は、すべてルータ（盗聴者）を通ります。</p>
+    </div>
+
+    <!-- 送信者：暗号方式と鍵 -->
+    <div class="card" data-role="sender">
+      <h2>🔐 送るときの暗号方式</h2>
+      <div class="modes">
+        <button class="mode sel" data-mode="plain"><b>① 暗号化なし</b><small>そのまま送る</small></button>
+        <button class="mode" data-mode="caesar"><b>② シーザー暗号</b><small>文字をずらす</small></button>
+        <button class="mode" data-mode="aes"><b>③ 共通鍵暗号</b><small>同じ合言葉で暗号化・復号</small></button>
+        <button class="mode" data-mode="rsa"><b>④ 公開鍵暗号</b><small>相手の公開鍵で暗号化</small></button>
+      </div>
+
+      <div class="keybox" data-panel="plain">
+        <p>メッセージをそのまま送ります。鍵は必要ありません。</p>
+      </div>
+      <div class="keybox" data-panel="caesar" hidden>
+        <p>文字を決まった数だけずらします。<b>受信者と同じ「ずらす数（鍵）」</b>にしておこう（盗聴者に聞こえないように決める）。</p>
+        <div class="row">
+          <div style="flex:0 1 160px"><label for="cShift">ずらす数（1〜25）</label><input id="cShift" type="number" min="1" max="25" value="3"></div>
+          <div class="grow"><label>例：「あいうえお ABC」→</label><div class="mono" id="cShiftDemo" style="padding:10px 0"></div></div>
+        </div>
+      </div>
+      <div class="keybox" data-panel="aes" hidden>
+        <p>暗号化と復号に<b>同じ合言葉（共通鍵）</b>を使います。受信者と同じ合言葉にしておこう。</p>
+        <div class="row">
+          <div class="grow"><label for="cPass">合言葉</label><input id="cPass" maxlength="40" autocomplete="off"></div>
+          <button class="btn-warn" id="cSendPass">合言葉をチャットで受信者に送る</button>
+        </div>
+        <p class="note" style="margin-top:6px">合言葉をチャットで送ると、ルータを通ります……。</p>
+      </div>
+      <div class="keybox" data-panel="rsa" hidden>
+        <p><b>受信者</b>が鍵ペア（公開鍵と秘密鍵）を作り、<b>公開鍵だけ</b>をあなたに送ってくれます。あなたは、<b>受信者の公開鍵</b>で暗号化して送ります。</p>
+        <h3>受信者の公開鍵</h3>
+        <div id="cPeerPub" class="note">まだ受け取っていません。受信者に「鍵ペアを作って公開鍵を送信者に送る」を押してもらおう。</div>
+      </div>
+    </div>
+
+    <!-- 受信者：復号のための鍵 -->
+    <div class="card" data-role="receiver" hidden>
+      <h2>🔑 復号（元に戻す）ための鍵</h2>
+      <p class="muted">届いたメッセージの暗号方式に合わせて、下の鍵で自動的に復号します。</p>
+      <div class="keybox">
+        <h3 style="margin-top:0">② シーザー暗号</h3>
+        <div class="row">
+          <div style="flex:0 1 160px"><label for="rShift">ずらす数（1〜25）</label><input id="rShift" type="number" min="1" max="25" value="3"></div>
+          <p class="note grow" style="margin:0 0 10px">送信者と同じ数にしておこう。</p>
+        </div>
+      </div>
+      <div class="keybox">
+        <h3 style="margin-top:0">③ 共通鍵暗号</h3>
+        <div class="row">
+          <div class="grow"><label for="rPass">合言葉</label><input id="rPass" maxlength="40" autocomplete="off"></div>
+        </div>
+        <p class="note" style="margin-top:6px">送信者と同じ合言葉にしておこう。</p>
+      </div>
+      <div class="keybox">
+        <h3 style="margin-top:0">④ 公開鍵暗号</h3>
+        <p class="note">ボタンを押すと、鍵ペア（公開鍵と秘密鍵）を作って、<b>公開鍵だけ</b>を送信者に送ります。秘密鍵はこのパソコンから出しません。</p>
+        <div class="row"><button class="btn-main" id="cGenKey">🔑 鍵ペアを作って公開鍵を送信者に送る</button></div>
+        <div id="cMyKeys" class="note" style="margin-top:6px">まだ作っていません</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2 id="cChatTitle">✉️ メッセージを送る</h2>
+      <div class="row" data-role="sender">
+        <div class="grow"><label for="cText">メッセージ <span class="mtag plain" id="cModeTag">① 暗号化なし</span></label><input id="cText" maxlength="200" autocomplete="off"></div>
+        <button class="btn-main" id="cSend">送信</button>
+      </div>
+      <ul class="list" id="cChat" style="margin-top:12px"></ul>
+      <div class="empty" id="cChatEmpty">まだメッセージはありません</div>
+    </div>
+  </div>
+
+  <div class="card" data-pktlog="c"></div>
+  <div class="card">
+    <h2>📜 できごとログ（新しい順）</h2>
+    <ul class="log" id="cLog"></ul>
+  </div>
+</section>
+
+</main>
+<script>
+const PREFIX = 'yic-crypto-taiken-v1-';
+const $ = s => document.querySelector(s);
+let peer = null;
+
+const TYPE_LABEL = { join: '接続要求', welcome: '接続許可（IP割当）', peer: '相手の情報', full: '満員', chat: 'メッセージ', key: '合言葉', pubkey: '公開鍵' };
+const MODE_LABEL = { plain: '① 暗号化なし', caesar: '② シーザー暗号', aes: '③ 共通鍵暗号', rsa: '④ 公開鍵暗号' };
+
+/* ---------- 共通 ---------- */
+function show(id){ document.querySelectorAll('.screen').forEach(e => e.hidden = (e.id !== id)); }
+function now(){ return new Date().toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit',second:'2-digit'}); }
+function esc(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function addLog(el, cls, html){ const li = document.createElement('li'); li.className = cls; li.innerHTML = `<time>${now()}</time>${html}`; el.prepend(li); }
+function setStatus(el, text, cls){ el.textContent = text; el.className = 'status ' + cls; }
+function ipToPeerId(ip){ return PREFIX + ip.replace(/\./g, '-'); }
+function normIp(s){ return s.trim().replace(/[．。]/g, '.').replace(/[０-９]/g, ch => String.fromCharCode(ch.charCodeAt(0) - 0xFEE0)); }
+function isValidIp(ip){ const p = ip.split('.'); return p.length === 4 && p.every(x => /^\d{1,3}$/.test(x) && Number(x) <= 255); }
+function byteSize(obj){ return new TextEncoder().encode(JSON.stringify(obj)).length; }
+function shorten(s, n){ s = String(s); return s.length > n ? s.slice(0, n) + `…（全${s.length}文字）` : s; }
+function netErrorText(err){
+  switch(err.type){
+    case 'peer-unavailable': return 'そのIPアドレスのルータが見つかりません。IPアドレスが正しいか、盗聴者役がルータを起動しているか確認してください。';
+    case 'network': case 'server-error': case 'socket-error': case 'socket-closed':
+      return '接続の仲介サーバにつながりません。インターネット接続か、校内ネットワークのフィルタを確認してください。';
+    case 'browser-incompatible': return 'このブラウザは対応していません。Chrome か Edge を使ってください。';
+    default: return '通信エラーが起きました（' + err.type + '）';
+  }
+}
+function resetPeer(){ if(peer){ try{ peer.destroy(); }catch(e){} peer = null; } }
+function downloadCsv(header, rows, filename){
+  const q = v => '"' + String(v).replace(/"/g, '""') + '"';
+  const csv = '﻿' + [header].concat(rows).map(r => r.map(q).join(',')).join('\r\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+  a.download = filename; document.body.append(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+/* ---------- 暗号 ---------- */
+const te = new TextEncoder(), td = new TextDecoder();
+const b64 = buf => { const u = new Uint8Array(buf); let s = ''; for(let i = 0; i < u.length; i++) s += String.fromCharCode(u[i]); return btoa(s); };
+const unb64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+
+// シーザー暗号：文字の種類ごとの並びの中でずらす
+const CAESAR_RANGES = [[0x3041,0x3096],[0x30A1,0x30FA],[0x41,0x5A],[0x61,0x7A],[0x30,0x39],[0x4E00,0x9FFF]];
+function caesar(text, k){
+  return Array.from(text).map(ch => {
+    const cp = ch.codePointAt(0);
+    for(const [a, b] of CAESAR_RANGES){
+      if(cp >= a && cp <= b){ const n = b - a + 1; return String.fromCodePoint(a + (((cp - a + k) % n) + n) % n); }
+    }
+    return ch;
+  }).join('');
+}
+// 共通鍵暗号：合言葉 → PBKDF2 → AES-256-GCM
+async function aesKey(pass, salt){
+  const base = await crypto.subtle.importKey('raw', te.encode(pass), 'PBKDF2', false, ['deriveKey']);
+  return crypto.subtle.deriveKey({ name: 'PBKDF2', salt, iterations: 100000, hash: 'SHA-256' }, base, { name: 'AES-GCM', length: 256 }, false, ['encrypt','decrypt']);
+}
+async function aesEncrypt(pass, text){
+  const salt = crypto.getRandomValues(new Uint8Array(16)), iv = crypto.getRandomValues(new Uint8Array(12));
+  const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, await aesKey(pass, salt), te.encode(text));
+  return { cipher: b64(ct), iv: b64(iv), salt: b64(salt) };
+}
+async function aesDecrypt(pass, d){
+  const pt = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: unb64(d.iv) }, await aesKey(pass, unb64(d.salt)), unb64(d.cipher));
+  return td.decode(pt);
+}
+// 公開鍵暗号：RSA-OAEP 2048
+const RSA = { name: 'RSA-OAEP', hash: 'SHA-256' };
+const RSA_MAX_BYTES = 190;
+
+/* ---------- 画面切り替え ---------- */
+document.querySelectorAll('[data-back]').forEach(b => b.addEventListener('click', () => {
+  if(peer && !confirm('接続を終了して最初の画面に戻りますか？')) return;
+  resetPeer(); location.reload();
+}));
+$('#goEve').addEventListener('click', () => show('eve'));
+const ROLE_LABEL = { sender: '送信者', receiver: '受信者' };
+function goRole(role){
+  C.role = role;
+  const other = role === 'sender' ? 'receiver' : 'sender';
+  $('#cBadge').textContent = ROLE_LABEL[role];
+  $('#cBadge').className = 'badge ' + (role === 'sender' ? 'c' : 'r');
+  $('#cPeerLabel').textContent = ROLE_LABEL[other];
+  $('#cChatTitle').textContent = role === 'sender' ? '✉️ メッセージを送る' : '📥 届いたメッセージ';
+  document.querySelectorAll('#comm [data-role]').forEach(el => el.hidden = el.dataset.role !== role);
+  show('comm'); $('#cName').focus();
+}
+$('#goSender').addEventListener('click', () => goRole('sender'));
+$('#goReceiver').addEventListener('click', () => goRole('receiver'));
+
+if(!window.crypto || !crypto.subtle){
+  document.querySelector('main').insertAdjacentHTML('afterbegin',
+    '<div class="card" style="border-color:var(--eve)"><b>このページでは暗号機能が使えません。</b>https:// のURLで開いてください。</div>');
+}
+
+/* =========================================================
+   盗聴者（ルータ）
+   ========================================================= */
+const E = { ip: '', net: '', next: 2, comms: new Map(), rows: [], pass: new Set(), pubs: [] };
+const eLog = (cls, html) => addLog($('#eLog'), cls, html);
+
+function eRenderComms(){
+  const list = [...E.comms.values()];
+  $('#eComms').innerHTML = list.map(c => `<li>${c.role === 'sender' ? '📤 <b>送信者</b>' : '📥 <b>受信者</b>'}　<span class="mono">${esc(c.ip)}</span>　${esc(c.name)}</li>`).join('');
+  $('#eCommsEmpty').hidden = list.length > 0;
+  $('#eCount').textContent = list.length;
+}
+function eRenderKeys(){
+  $('#ePass').innerHTML = [...E.pass].map(p => `<li class="mono">${esc(p)}</li>`).join('');
+  $('#ePassEmpty').hidden = E.pass.size > 0;
+  $('#ePub').innerHTML = E.pubs.map(p => `<li><span class="meta">${esc(p.from)} の公開鍵</span><code class="blk">${esc(shorten(p.key, 60))}</code></li>`).join('');
+  $('#ePubEmpty').hidden = E.pubs.length > 0;
+}
+function eSend(conn, dst, type, data){ conn.send({ src: E.ip, dst, type, data }); }
+
+function eRecord(pkt){
+  const d = pkt.data || {};
+  const mode = pkt.type === 'chat' ? String(d.mode || '') : '';
+  let shown;
+  if(pkt.type === 'chat' && mode === 'plain') shown = { text: d.text };
+  else shown = d;
+  const r = { no: E.rows.length + 1, time: now(), src: String(pkt.src), dst: String(pkt.dst), type: String(pkt.type), mode, data: JSON.stringify(shown), raw: d, size: byteSize(d) };
+  E.rows.push(r);
+  const tr = document.createElement('tr');
+  tr.dataset.no = r.no;
+  const canCrack = pkt.type === 'chat' && mode !== 'plain';
+  tr.innerHTML = `<td class="n">${r.no}</td><td class="n">${r.time}</td>` +
+    `<td class="addr mono">${esc(r.src)}</td><td class="addr mono">${esc(r.dst)}</td>` +
+    `<td>${esc(TYPE_LABEL[r.type] || r.type)}</td>` +
+    `<td>${mode ? `<span class="mtag ${esc(mode)}">${esc(MODE_LABEL[mode] || mode)}</span>` : ''}</td>` +
+    `<td><code>${esc(r.data)}</code></td><td class="n">${r.size} B</td>` +
+    `<td>${canCrack ? `<button class="btn-eve sm" data-crack="${r.no}">解読</button>` : (mode === 'plain' ? '<span class="fail">丸見え</span>' : '')}</td>`;
+  $('#eBody').prepend(tr);
+  $('#eEmpty').hidden = true;
+  $('#eCnt').textContent = E.rows.length;
+}
+$('#eBody').addEventListener('click', e => {
+  const b = e.target.closest('[data-crack]');
+  if(b) openCrack(Number(b.dataset.crack));
+});
+$('#eCsv').addEventListener('click', () => {
+  if(!E.rows.length){ alert('まだ通信データがありません'); return; }
+  downloadCsv(['No','時刻','送信元IP','宛先IP','種類','暗号方式','データ','サイズ(バイト)'],
+    E.rows.map(r => [r.no, r.time, r.src, r.dst, TYPE_LABEL[r.type] || r.type, MODE_LABEL[r.mode] || '', r.data, r.size]),
+    `盗聴ログ_${(E.ip || 'router').replace(/\./g, '-')}.csv`);
+});
+
+/* 解読ルーム */
+let crackNo = 0;
+function openCrack(no){
+  const r = E.rows[no - 1];
+  if(!r) return;
+  crackNo = no;
+  document.querySelectorAll('#eBody tr').forEach(tr => tr.classList.toggle('sel', Number(tr.dataset.no) === no));
+  const box = $('#eCrackBody');
+  const head = `<p>パケット <b>No.${no}</b>（<span class="mono">${esc(r.src)}</span> → <span class="mono">${esc(r.dst)}</span>）<span class="mtag ${esc(r.mode)}">${esc(MODE_LABEL[r.mode])}</span></p>`;
+  if(r.mode === 'caesar'){
+    const c = String(r.raw.cipher || '');
+    const items = [];
+    for(let k = 1; k <= 25; k++) items.push(`<li>${esc(caesar(c, -k))}</li>`);
+    box.innerHTML = head + `<p>暗号文：<code class="blk">${esc(c)}</code></p>` +
+      `<p><b>総当たり攻撃</b>：ずらす数を1〜25まで全部試しました。<b>意味の通る文はどれ？</b>（番号＝ずらす数）</p><ol class="brute">${items.join('')}</ol>`;
+  }
+  else if(r.mode === 'aes'){
+    box.innerHTML = head + `<p>暗号文：<code class="blk">${esc(shorten(r.raw.cipher, 120))}</code></p>` +
+      `<h3>盗み取った合言葉で試す</h3><div id="crkStolen" class="note">${E.pass.size ? '試しています…' : 'まだ合言葉を盗めていません。'}</div>` +
+      `<h3>合言葉を予想して試す</h3><div class="row"><div class="grow"><input id="crkGuess" maxlength="40" placeholder="予想した合言葉" autocomplete="off"></div><button class="btn-eve" id="crkTry">試す</button></div>` +
+      `<div id="crkGuessOut" style="margin-top:8px"></div>` +
+      `<p class="note" style="margin-top:8px">この暗号の鍵（256ビット）の組み合わせは約 10<sup>77</sup> 通り。1秒に1兆回試しても、宇宙の年齢より長くかかります。</p>`;
+    tryStolenPass(r);
+    $('#crkTry').addEventListener('click', () => tryGuess(r));
+    $('#crkGuess').addEventListener('keydown', e => { if(e.key === 'Enter' && !e.isComposing) tryGuess(r); });
+  }
+  else if(r.mode === 'rsa'){
+    box.innerHTML = head + `<p>暗号文：<code class="blk">${esc(shorten(r.raw.cipher, 120))}</code></p>` +
+      `<h3>盗み取った公開鍵で復号してみる</h3><div id="crkRsa" class="note">${E.pubs.length ? '試しています…' : 'まだ公開鍵を盗めていません。'}</div>` +
+      `<p class="note" style="margin-top:8px">復号に必要な<b>秘密鍵</b>は、一度もルータ（通信路）を通っていません。</p>`;
+    tryRsa(r);
+  }
+}
+async function tryStolenPass(r){
+  if(!E.pass.size) return;
+  const out = [];
+  for(const p of E.pass){
+    try{ const t = await aesDecrypt(p, r.raw); out.push(`<div>合言葉「<span class="mono">${esc(p)}</span>」→ <span class="okc">解読成功！</span>「<span class="plain-out">${esc(t)}</span>」</div>`); }
+    catch(e){ out.push(`<div>合言葉「<span class="mono">${esc(p)}</span>」→ <span class="fail">失敗</span></div>`); }
+  }
+  if(crackNo === r.no && $('#crkStolen')) $('#crkStolen').innerHTML = out.join('');
+}
+async function tryGuess(r){
+  const g = $('#crkGuess').value;
+  if(!g) return;
+  let html;
+  try{ const t = await aesDecrypt(g, r.raw); html = `<span class="okc">解読成功！</span>「<span class="plain-out">${esc(t)}</span>」`; eLog('err', `🔓 予想した合言葉でパケット No.${r.no} の解読に成功`); }
+  catch(e){ html = `<span class="fail">「${esc(g)}」では解読できませんでした。</span>`; }
+  $('#crkGuessOut').innerHTML = html;
+}
+async function tryRsa(r){
+  if(!E.pubs.length) return;
+  const out = [];
+  for(const p of E.pubs){
+    try{
+      const k = await crypto.subtle.importKey('spki', unb64(p.key), RSA, false, ['decrypt']);
+      await crypto.subtle.decrypt(RSA, k, unb64(r.raw.cipher));
+      out.push(`<div>${esc(p.from)} の公開鍵 → 解読成功（想定外）</div>`);
+    }catch(e){
+      out.push(`<div>${esc(p.from)} の公開鍵 → <span class="fail">復号できません。公開鍵は「暗号化」専用で、「復号」には使えません。</span></div>`);
+    }
+  }
+  if(crackNo === r.no && $('#crkRsa')) $('#crkRsa').innerHTML = out.join('');
+}
+
+function startRouter(){
+  resetPeer();
+  const third = 1 + Math.floor(Math.random() * 254);
+  const ip = `192.168.${third}.1`;
+  setStatus($('#eStatus'), '起動中…', 'wait');
+  $('#eStart').disabled = true;
+  peer = new Peer(ipToPeerId(ip), { debug: 0 });
+  peer.on('open', () => {
+    E.ip = ip; E.net = `192.168.${third}.`; E.next = 2;
+    $('#eIp').textContent = ip;
+    setStatus($('#eStatus'), '稼働中（送信者・受信者を待っています）', 'on');
+    $('#eStop').disabled = false;
+    eLog('sys', `ルータを起動しました。IPアドレス <b class="mono">${ip}</b> を送信者と受信者に伝えてください。`);
+  });
+  peer.on('error', err => {
+    if(err.type === 'unavailable-id'){ startRouter(); return; }
+    eLog('err', esc(netErrorText(err)));
+    if(!peer || peer.destroyed || !peer.open){ setStatus($('#eStatus'), '起動できませんでした', 'off'); $('#eStart').disabled = false; }
+  });
+  peer.on('connection', conn => {
+    conn.on('data', pkt => eHandle(conn, pkt));
+    conn.on('close', () => {
+      const c = E.comms.get(conn.peer);
+      if(!c) return;
+      E.comms.delete(conn.peer); eRenderComms();
+      eLog('sys', `${esc(c.name)} さん（${esc(c.ip)}）の接続が切れました`);
+      for(const o of E.comms.values()) eSend(o.conn, o.ip, 'peer', { peer: null });
+    });
+  });
+}
+function stopRouter(){
+  if(!confirm('ルータを停止しますか？ 送信者と受信者は通信できなくなります。')) return;
+  resetPeer();
+  E.comms.clear(); eRenderComms();
+  $('#eIp').textContent = '---.---.---.---';
+  setStatus($('#eStatus'), '停止中', 'off');
+  $('#eStart').disabled = false; $('#eStop').disabled = true;
+  eLog('sys', 'ルータを停止しました。');
+}
+function eHandle(conn, pkt){
+  if(!pkt || typeof pkt !== 'object' || typeof pkt.type !== 'string') return;
+  const d = (pkt.data && typeof pkt.data === 'object') ? pkt.data : {};
+  if(pkt.type === 'join'){
+    const role = d.role === 'receiver' ? 'receiver' : 'sender';
+    const name = String(d.name || '').trim().slice(0, 20) || '名無し';
+    if([...E.comms.values()].some(c => c.role === role)){
+      eSend(conn, '0.0.0.0', 'full', { reason: `${ROLE_LABEL[role]}はすでにいます` });
+      setTimeout(() => conn.close(), 500);
+      eLog('sys', `${esc(name)} さんが${ROLE_LABEL[role]}として接続しようとしましたが、${ROLE_LABEL[role]}はすでにいるので断りました`);
+      return;
+    }
+    const ip = E.net + (E.next++);
+    const other = [...E.comms.values()][0] || null;
+    E.comms.set(conn.peer, { ip, name, conn, role });
+    eRenderComms();
+    eLog('sys', `${role === 'sender' ? '📤' : '📥'} ${esc(name)} さんが<b>${ROLE_LABEL[role]}</b>として接続 → IPアドレス <span class="mono">${ip}</span> を割り当て`);
+    eSend(conn, ip, 'welcome', { yourIp: ip, peer: other ? { ip: other.ip, name: other.name } : null });
+    if(other) eSend(other.conn, other.ip, 'peer', { peer: { ip, name } });
+    return;
+  }
+  const from = E.comms.get(conn.peer);
+  if(!from) return;
+  const to = [...E.comms.values()].find(c => c !== from);
+  const clean = { src: from.ip, dst: to ? to.ip : String(pkt.dst), type: pkt.type, data: d };
+  eRecord(clean);
+  if(pkt.type === 'key' && d.passphrase){
+    E.pass.add(String(d.passphrase).slice(0, 40)); eRenderKeys();
+    eLog('err', `🔑 合言葉「<span class="mono">${esc(d.passphrase)}</span>」を盗み取りました！`);
+  }
+  if(pkt.type === 'pubkey' && d.publicKey){
+    E.pubs.push({ from: `${from.name}（${from.ip}）`, key: String(d.publicKey) }); eRenderKeys();
+    eLog('err', `🔑 ${esc(from.name)} さんの公開鍵を盗み取りました`);
+  }
+  if(pkt.type === 'chat'){
+    const m = String(d.mode);
+    eLog(m === 'plain' ? 'err' : 'sys', m === 'plain'
+      ? `👀 ${esc(from.name)} さんのメッセージ「${esc(d.text)}」が丸見え`
+      : `🔒 ${esc(from.name)} さんから暗号化されたメッセージ（${esc(MODE_LABEL[m] || m)}）を中継`);
+  }
+  if(to) to.conn.send(clean);
+  else eLog('sys', '相手がまだいないので、届けられませんでした');
+  if(crackNo && (pkt.type === 'key' || pkt.type === 'pubkey')) openCrack(crackNo);   // 新しい鍵を盗んだら解読ルームを更新
+}
+$('#eStart').addEventListener('click', startRouter);
+$('#eStop').addEventListener('click', stopRouter);
+eRenderComms(); eRenderKeys();
+
+/* =========================================================
+   通信者
+   ========================================================= */
+var C = { role: 'sender', name: '', ip: '0.0.0.0', routerIp: '', conn: null, partner: null, mode: 'plain',
+  keyPair: null, myPub: '', partnerPub: null, partnerPubB64: '' };
+const cLog = (cls, html) => addLog($('#cLog'), cls, html);
+
+/* 通信者のパケットログ */
+const CP = { rows: [], bytes: 0 };
+(function(){
+  const box = document.querySelector('[data-pktlog="c"]');
+  box.innerHTML = `
+    <div class="topbar" style="margin-bottom:8px">
+      <h2 style="margin:0">📦 通信データログ（この端末が送受信したパケット）</h2>
+      <div class="row"><span class="muted"><span id="cpCnt">0</span>件 ／ 合計 <span id="cpBytes">0</span>バイト</span><button class="btn-ghost" id="cpCsv">CSVで保存</button></div>
+    </div>
+    <div class="pkt-wrap"><table class="pkt">
+      <thead><tr><th>No.</th><th>時刻</th><th>向き</th><th>送信元IP</th><th>宛先IP</th><th>種類</th><th>データ（実際に流れた中身）</th><th>サイズ</th></tr></thead>
+      <tbody id="cpBody"></tbody></table>
+      <div class="empty" id="cpEmpty" style="padding:10px">まだ通信はありません</div></div>`;
+  $('#cpCsv').addEventListener('click', () => {
+    if(!CP.rows.length){ alert('まだ通信データがありません'); return; }
+    downloadCsv(['No','時刻','向き','送信元IP','宛先IP','種類','データ','サイズ(バイト)'],
+      CP.rows.map(r => [r.no, r.time, r.dir, r.src, r.dst, TYPE_LABEL[r.type] || r.type, r.data, r.size]),
+      `通信データログ_${(C.ip || 'comm').replace(/\./g, '-')}.csv`);
+  });
+})();
+function cRecord(dir, pkt){
+  const size = byteSize(pkt.data);
+  const r = { no: CP.rows.length + 1, time: now(), dir, src: String(pkt.src), dst: String(pkt.dst), type: String(pkt.type), data: JSON.stringify(pkt.data), size };
+  CP.rows.push(r); CP.bytes += size;
+  const tr = document.createElement('tr');
+  tr.className = dir === '受信' ? 'rx' : 'tx';
+  tr.innerHTML = `<td class="n">${r.no}</td><td class="n">${r.time}</td><td class="dir">${dir === '受信' ? '⬇ 受信' : '⬆ 送信'}</td>` +
+    `<td class="addr mono">${esc(r.src)}</td><td class="addr mono">${esc(r.dst)}</td><td>${esc(TYPE_LABEL[r.type] || r.type)}</td>` +
+    `<td><code>${esc(r.data)}</code></td><td class="n">${size} B</td>`;
+  $('#cpBody').prepend(tr);
+  $('#cpEmpty').hidden = true;
+  $('#cpCnt').textContent = CP.rows.length; $('#cpBytes').textContent = CP.bytes;
+}
+function cSend(type, data){
+  if(!C.conn || !C.conn.open) throw new Error('not connected');
+  const pkt = { src: C.ip, dst: C.partner ? C.partner.ip : C.routerIp, type, data };
+  C.conn.send(pkt); cRecord('送信', pkt);
+}
+
+function cConnect(){
+  const name = $('#cName').value.trim();
+  const rip = normIp($('#cRouter').value);
+  if(!name){ alert('名前を入力してください'); $('#cName').focus(); return; }
+  if(!isValidIp(rip)){ alert('ルータのIPアドレスを「192.168.23.1」のような形で入力してください'); $('#cRouter').focus(); return; }
+  resetPeer();
+  Object.assign(C, { name, ip: '0.0.0.0', routerIp: rip });
+  $('#cConnect').disabled = true;
+  setStatus($('#cStatus'), '接続中…', 'wait');
+  peer = new Peer({ debug: 0 });
+  peer.on('open', () => {
+    const conn = peer.connect(ipToPeerId(rip), { reliable: true });
+    C.conn = conn;
+    const timer = setTimeout(() => { if(!conn.open){ cLog('err', 'ルータから応答がありません。IPアドレスを確認してください。'); cFail(); } }, 10000);
+    conn.on('open', () => { clearTimeout(timer); const pkt = { src: '0.0.0.0', dst: rip, type: 'join', data: { name, role: C.role } }; conn.send(pkt); cRecord('送信', pkt); });
+    conn.on('data', cHandle);
+    conn.on('close', () => {
+      if($('#cMain').hidden){ cFail(); return; }
+      cLog('err', 'ルータとの接続が切れました。');
+      $('#cPeer').textContent = '切断';
+    });
+  });
+  peer.on('error', err => { cLog('err', esc(netErrorText(err))); if($('#cMain').hidden) cFail(); });
+}
+function cFail(){
+  if(!$('#cMain').hidden) return;
+  resetPeer();
+  setStatus($('#cStatus'), '接続できませんでした', 'off');
+  $('#cConnect').disabled = false;
+}
+function setPartner(p){
+  C.partner = p;
+  $('#cPeer').textContent = p ? `${p.name}（${p.ip}）` : 'まだいません';
+  if(!p){ C.partnerPub = null; C.partnerPubB64 = ''; $('#cPeerPub').textContent = 'まだ受け取っていません。受信者に「鍵ペアを作って公開鍵を送信者に送る」を押してもらおう。'; }
+}
+
+async function cHandle(pkt){
+  if(!pkt || typeof pkt !== 'object') return;
+  const d = (pkt.data && typeof pkt.data === 'object') ? pkt.data : {};
+  cRecord('受信', { src: pkt.src, dst: pkt.dst, type: pkt.type, data: d });
+  if(pkt.type === 'full'){ cLog('err', `このルータにはすでに${esc(ROLE_LABEL[C.role])}がいます。役割を確認してください。`); cFail(); return; }
+  if(pkt.type === 'welcome'){
+    C.ip = String(d.yourIp);
+    $('#cLogin').hidden = true; $('#cMain').hidden = false;
+    $('#cTitle').textContent = `${C.name} さん`;
+    $('#cMyIp').textContent = C.ip; $('#cRouterIp').textContent = C.routerIp;
+    setPartner(d.peer ? { ip: String(d.peer.ip), name: String(d.peer.name) } : null);
+    const otherLabel = ROLE_LABEL[C.role === 'sender' ? 'receiver' : 'sender'];
+    cLog('sys', `${esc(ROLE_LABEL[C.role])}として接続しました。あなたのIPアドレスは <span class="mono">${esc(C.ip)}</span>。` + (C.partner ? `${otherLabel}は ${esc(C.partner.name)} さんです。` : `${otherLabel}を待っています。`));
+    $('#cText').focus();
+    return;
+  }
+  if(pkt.type === 'peer'){
+    if(d.peer){ setPartner({ ip: String(d.peer.ip), name: String(d.peer.name) }); cLog('sys', `${esc(d.peer.name)} さんが接続しました。通信できます。`); }
+    else { setPartner(null); cLog('err', '相手の接続が切れました。'); }
+    return;
+  }
+  const who = C.partner ? C.partner.name : '相手';
+  if(pkt.type === 'key'){
+    const p = String(d.passphrase || '').slice(0, 40);
+    const li = sysChat(`🔑 ${esc(who)} さんから合言葉「<span class="mono">${esc(p)}</span>」が届きました。 <button class="btn-ghost sm" data-usepass>この合言葉を使う</button>`);
+    li.querySelector('[data-usepass]').addEventListener('click', () => { $('#rPass').value = p; cLog('sys', '受け取った合言葉を設定しました'); });
+    return;
+  }
+  if(pkt.type === 'pubkey'){
+    try{
+      C.partnerPub = await crypto.subtle.importKey('spki', unb64(String(d.publicKey)), RSA, false, ['encrypt']);
+      C.partnerPubB64 = String(d.publicKey);
+      $('#cPeerPub').innerHTML = `<span class="okc">受け取りました</span><code class="blk">${esc(shorten(C.partnerPubB64, 60))}</code>④で送ると、この公開鍵で暗号化します。`;
+      sysChat(`🔑 ${esc(who)} さんから公開鍵が届きました。④公開鍵暗号で送れるようになりました。`);
+    }catch(e){ cLog('err', '公開鍵を読み込めませんでした'); }
+    return;
+  }
+  if(pkt.type === 'chat') receiveChat(d, who);
+}
+
+async function receiveChat(d, who){
+  const mode = String(d.mode);
+  let cipherShown = '', result;
+  try{
+    if(mode === 'plain'){ result = { ok: true, text: String(d.text || '') }; }
+    else if(mode === 'caesar'){
+      const k = Number($('#rShift').value) || 0;
+      cipherShown = String(d.cipher || '');
+      result = { ok: true, text: caesar(cipherShown, -k), note: `あなたの鍵（ずらす数 ${k}）で復号。読めなければ鍵が違うかも` };
+    }
+    else if(mode === 'aes'){
+      cipherShown = String(d.cipher || '');
+      const p = $('#rPass').value;
+      if(!p) result = { ok: false, text: '合言葉が設定されていないので読めません' };
+      else { try{ result = { ok: true, text: await aesDecrypt(p, d), note: 'あなたの合言葉で復号' }; } catch(e){ result = { ok: false, text: '合言葉が違うので読めません' }; } }
+    }
+    else if(mode === 'rsa'){
+      cipherShown = String(d.cipher || '');
+      if(!C.keyPair) result = { ok: false, text: '鍵ペア（秘密鍵）がないので読めません' };
+      else { try{ result = { ok: true, text: td.decode(await crypto.subtle.decrypt(RSA, C.keyPair.privateKey, unb64(cipherShown))), note: 'あなたの秘密鍵で復号' }; } catch(e){ result = { ok: false, text: '読めません（古い公開鍵で暗号化された？）' }; } }
+    }
+    else return;
+  }catch(e){ result = { ok: false, text: '読めませんでした' }; }
+  addChat(false, who, mode, cipherShown, result);
+  cLog('in', `💬 ${esc(who)} さんからメッセージ（${esc(MODE_LABEL[mode] || mode)}）`);
+}
+
+async function cSendChat(){
+  const text = $('#cText').value.trim();
+  if(!text) return;
+  if(!C.partner){ cLog('err', 'まだ相手がいません'); return; }
+  let data;
+  try{
+    if(C.mode === 'plain') data = { mode: 'plain', text };
+    else if(C.mode === 'caesar'){
+      const k = Number($('#cShift').value);
+      if(!(k >= 1 && k <= 25)){ alert('ずらす数は1〜25にしてください'); return; }
+      data = { mode: 'caesar', cipher: caesar(text, k) };
+    }
+    else if(C.mode === 'aes'){
+      const p = $('#cPass').value;
+      if(!p){ alert('合言葉を入力してください'); $('#cPass').focus(); return; }
+      data = { mode: 'aes', ...(await aesEncrypt(p, text)) };
+    }
+    else if(C.mode === 'rsa'){
+      if(!C.partnerPub){ alert('受信者の公開鍵がまだ届いていません。受信者に「鍵ペアを作って公開鍵を送信者に送る」を押してもらおう。'); return; }
+      const bytes = te.encode(text);
+      if(bytes.length > RSA_MAX_BYTES){ alert('④公開鍵暗号で一度に送れるのは全角60文字程度までです。短くしてください。'); return; }
+      data = { mode: 'rsa', cipher: b64(await crypto.subtle.encrypt(RSA, C.partnerPub, bytes)) };
+    }
+    cSend('chat', data);
+  }catch(e){ cLog('err', '送信できませんでした'); return; }
+  addChat(true, 'あなた', C.mode, data.cipher || '', { ok: true, text });
+  cLog('out', `📨 ${esc(MODE_LABEL[C.mode])}で送信`);
+  $('#cText').value = ''; $('#cText').focus();
+}
+
+function addChat(mine, who, mode, cipher, result){
+  const li = document.createElement('li');
+  if(mine) li.className = 'mine';
+  let h = `<span class="meta">${now()}　${esc(who)}　</span><span class="mtag ${esc(mode)}">${esc(MODE_LABEL[mode] || mode)}</span>`;
+  if(cipher) h += `<div class="meta" style="margin-top:4px">${mine ? '実際に送った暗号文' : '届いた暗号文'}：</div><code class="blk">${esc(shorten(cipher, 100))}</code>`;
+  if(result.ok) h += `<div style="margin-top:4px">${cipher ? (mine ? '元の文：' : '復号結果：') : ''}<span class="plain-out">${esc(result.text)}</span></div>` + (result.note ? `<div class="note">${esc(result.note)}</div>` : '');
+  else h += `<div class="fail" style="margin-top:4px">🔒 ${esc(result.text)}</div>`;
+  li.innerHTML = h;
+  $('#cChat').append(li);
+  $('#cChatEmpty').hidden = true;
+  $('#cChat').scrollTop = $('#cChat').scrollHeight;
+  return li;
+}
+function sysChat(html){
+  const li = document.createElement('li');
+  li.className = 'sysmsg';
+  li.innerHTML = `<span class="meta">${now()}</span><br>${html}`;
+  $('#cChat').append(li);
+  $('#cChatEmpty').hidden = true;
+  $('#cChat').scrollTop = $('#cChat').scrollHeight;
+  return li;
+}
+
+/* 暗号方式の切り替え */
+document.querySelectorAll('.mode').forEach(b => b.addEventListener('click', () => {
+  C.mode = b.dataset.mode;
+  document.querySelectorAll('.mode').forEach(x => x.classList.toggle('sel', x === b));
+  document.querySelectorAll('[data-panel]').forEach(p => p.hidden = p.dataset.panel !== C.mode);
+  const tag = $('#cModeTag'); tag.className = 'mtag ' + C.mode; tag.textContent = MODE_LABEL[C.mode];
+}));
+function updateShiftDemo(){
+  const k = Number($('#cShift').value) || 0;
+  $('#cShiftDemo').textContent = caesar('あいうえお ABC', k);
+}
+$('#cShift').addEventListener('input', updateShiftDemo);
+updateShiftDemo();
+
+$('#cSendPass').addEventListener('click', () => {
+  const p = $('#cPass').value;
+  if(!p){ alert('先に合言葉を入力してください'); return; }
+  if(!C.partner){ alert('まだ相手がいません'); return; }
+  if(!confirm('合言葉をチャットで送ります。このデータはルータを通ります。本当に送りますか？')) return;
+  try{ cSend('key', { passphrase: p }); sysChat(`🔑 合言葉「<span class="mono">${esc(p)}</span>」を相手に送りました。……ルータを通りました。`); cLog('warn', '合言葉をチャットで送りました'); }
+  catch(e){ cLog('err', '送れませんでした'); }
+});
+$('#cGenKey').addEventListener('click', async () => {
+  if(!C.partner){ alert('まだ送信者がいません。送信者が接続してから押してください。'); return; }
+  $('#cGenKey').disabled = true;
+  $('#cMyKeys').textContent = '鍵ペアを作成中…';
+  try{
+    // ① 鍵ペア（公開鍵・秘密鍵）を作る
+    C.keyPair = await crypto.subtle.generateKey({ ...RSA, modulusLength: 2048, publicExponent: new Uint8Array([1,0,1]) }, true, ['encrypt','decrypt']);
+    C.myPub = b64(await crypto.subtle.exportKey('spki', C.keyPair.publicKey));
+    $('#cMyKeys').innerHTML = `<div><b>公開鍵</b>（誰に見られてもよい → 送信者に送りました）</div><code class="blk">${esc(shorten(C.myPub, 60))}</code>` +
+      `<div style="margin-top:6px"><b>秘密鍵</b>（このパソコンの中だけ。通信路には流しません）</div><code class="blk">🔒 ••••••••••••••••</code>`;
+    cLog('sys', '鍵ペア（公開鍵・秘密鍵）を作りました');
+    // ② 公開鍵だけを送信者に送る
+    cSend('pubkey', { publicKey: C.myPub });
+    sysChat('🔑 鍵ペアを作り、<b>公開鍵だけ</b>を送信者に送りました。（ルータにも見られています。秘密鍵は送っていません）');
+    cLog('out', '公開鍵を送信者に送りました');
+    $('#cGenKey').textContent = '🔑 鍵ペアを作り直して公開鍵を送り直す';
+  }catch(e){ $('#cMyKeys').textContent = '鍵ペアの作成または送信ができませんでした'; cLog('err', '公開鍵を送れませんでした'); }
+  $('#cGenKey').disabled = false;
+});
+
+$('#cConnect').addEventListener('click', cConnect);
+$('#cRouter').addEventListener('keydown', e => { if(e.key === 'Enter' && !e.isComposing) cConnect(); });
+$('#cSend').addEventListener('click', cSendChat);
+$('#cText').addEventListener('keydown', e => { if(e.key === 'Enter' && !e.isComposing) cSendChat(); });
+
+if(typeof Peer === 'undefined'){
+  document.querySelector('main').insertAdjacentHTML('afterbegin',
+    '<div class="card" style="border-color:var(--eve)"><b>通信用ライブラリを読み込めませんでした。</b>インターネット接続を確認してください。</div>');
+}
+</script>
+</body>
+</html>
