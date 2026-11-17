@@ -68,8 +68,8 @@ label{display:block;font-size:.9rem;color:var(--muted);margin-bottom:4px}
 .status{font-weight:700}
 .status.on{color:var(--ok)} .status.off{color:var(--eve)} .status.wait{color:var(--warn)}
 /* 暗号方式の選択 */
-.modes{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
-@media (max-width:760px){.modes{grid-template-columns:1fr 1fr}}
+.modes{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+@media (max-width:760px){.modes{grid-template-columns:1fr}}
 .mode{border:2px solid var(--line);border-radius:10px;padding:10px;background:var(--bg);color:var(--text);text-align:left;font-weight:400}
 .mode b{display:block;font-size:.95rem}
 .mode small{color:var(--muted);font-size:.78rem}
@@ -77,7 +77,6 @@ label{display:block;font-size:.9rem;color:var(--muted);margin-bottom:4px}
 .mtag{display:inline-block;font-size:.75rem;font-weight:700;padding:1px 8px;border-radius:999px;background:var(--code-bg);color:var(--muted)}
 .mtag.plain{background:var(--eve-soft);color:var(--eve)}
 .mtag.caesar{background:var(--warn-soft);color:var(--warn)}
-.mtag.aes{background:var(--me-soft);color:var(--me)}
 .mtag.rsa{background:var(--ok-soft);color:var(--ok)}
 .keybox{background:var(--bg);border-radius:10px;padding:12px;margin-top:12px}
 code.blk{display:block;background:var(--code-bg);padding:6px 8px;border-radius:6px;white-space:pre-wrap;word-break:break-all;
@@ -145,23 +144,22 @@ table.cmp th,table.cmp td{border:1px solid var(--line);padding:6px 8px;text-alig
         <li>3人1組をつくり、送信者・受信者・盗聴者を決める。盗聴者が「ルータを起動」を押し、表示されたIPアドレスを送信者と受信者に伝える。</li>
         <li><b>① 暗号化なし</b>：送信者がメッセージを送る。盗聴者の画面に何が見えるか？</li>
         <li><b>② シーザー暗号</b>：送信者と受信者で「ずらす数（鍵）」を<b>盗聴者に聞こえないように</b>決めて、それぞれ設定する。盗聴者は「解読」ボタンの<b>総当たり</b>で解けるか試す。</li>
-        <li><b>③ 共通鍵暗号</b>：送信者と受信者で合言葉を決めて、それぞれ設定する。盗聴者は解読できるか？ 次に、送信者が「合言葉をチャットで受信者に送る」を使ってみる。盗聴者はどうなる？（<b>鍵配送問題</b>）</li>
-        <li><b>④ 公開鍵暗号</b>：受信者が「鍵ペアを作って公開鍵を送信者に送る」を押す。送信者は受信者の公開鍵で暗号化して送る。盗聴者は公開鍵を盗めるが、解読できるか？</li>
+        <li><b>②の続き</b>：鍵を盗聴者に知られないように相手に渡すには、どうすればよいか考える（<b>鍵配送問題</b>）。チャットで鍵を送ったら？</li>
+        <li><b>③ 公開鍵暗号</b>：受信者が「鍵ペアを作って公開鍵を送信者に送る」を押す。送信者は受信者の公開鍵で暗号化して送る。盗聴者は公開鍵を盗めるが、解読できるか？</li>
         <li>役割を交代して、もう一度体験する（3人全員が3つの役を体験できる）。</li>
       </ol>
-      <p><b>4つの方式のまとめ</b></p>
+      <p><b>3つの方式のまとめ</b></p>
       <table class="cmp">
         <tr><th>方式</th><th>盗聴者は読める？</th><th>弱点・課題</th></tr>
         <tr><td>① 暗号化なし</td><td>そのまま読める</td><td>通り道の誰にでも読まれる</td></tr>
-        <tr><td>② シーザー暗号</td><td>総当たりですぐ解ける</td><td>鍵の種類が25通りしかない</td></tr>
-        <tr><td>③ 共通鍵暗号（AES）</td><td>鍵がなければ読めない</td><td>鍵を相手にどう渡すか（鍵配送問題）</td></tr>
-        <tr><td>④ 公開鍵暗号（RSA）</td><td>公開鍵を盗んでも読めない</td><td>処理が重い → 実際のHTTPSでは③と④を組み合わせる</td></tr>
+        <tr><td>② シーザー暗号（共通鍵暗号の一種）</td><td>総当たりですぐ解ける</td><td>鍵の種類が25通りしかない。鍵を相手にどう渡すか（鍵配送問題）</td></tr>
+        <tr><td>③ 公開鍵暗号（RSA）</td><td>公開鍵を盗んでも読めない</td><td>処理が重い → 実際のHTTPSでは共通鍵暗号と組み合わせる</td></tr>
       </table>
       <p><b>考えさせたい問い</b></p>
       <ul>
         <li>シーザー暗号の鍵が25通りではなく1兆通りあったら、総当たりで解けるか？</li>
-        <li>③で、合言葉を安全に相手に渡すにはどうすればよいか？ 会ったことのない相手（ネットショップなど）だったら？</li>
-        <li>④で、公開鍵を誰に見られても大丈夫なのはなぜか？ 秘密鍵は一度でも通信路を流れたか？</li>
+        <li>②で、鍵（ずらす数）を安全に相手に渡すにはどうすればよいか？ 会ったことのない相手（ネットショップなど）だったら？</li>
+        <li>③で、公開鍵を誰に見られても大丈夫なのはなぜか？ 秘密鍵は一度でも通信路を流れたか？</li>
         <li>Webサイトの🔒マーク（HTTPS）では、どの方式が使われているか？</li>
       </ul>
     </details>
@@ -169,8 +167,7 @@ table.cmp th,table.cmp td{border:1px solid var(--line);padding:6px 8px;text-alig
       <summary>この教材の暗号について</summary>
       <ul>
         <li>② シーザー暗号は、ひらがな・カタカナ・漢字・英数字を、それぞれの文字の並びの中で指定した数だけずらします。</li>
-        <li>③ 共通鍵暗号は、ブラウザに組み込まれた本物の <b>AES-256-GCM</b>（合言葉から PBKDF2 で鍵を作成）です。</li>
-        <li>④ 公開鍵暗号は、ブラウザに組み込まれた本物の <b>RSA-OAEP 2048ビット</b>です。1回に送れるのは全角60文字程度までです。</li>
+        <li>③ 公開鍵暗号は、ブラウザに組み込まれた本物の <b>RSA-OAEP 2048ビット</b>です。1回に送れるのは全角60文字程度までです。</li>
         <li>IPアドレスは教材の中だけで使う仮想のものです。メッセージはどこにも保存されず、ページを閉じると消えます。</li>
       </ul>
     </details>
@@ -213,9 +210,6 @@ table.cmp th,table.cmp td{border:1px solid var(--line);padding:6px 8px;text-alig
     </div>
     <div class="card">
       <h2>🔑 盗み取った鍵</h2>
-      <h3>合言葉（共通鍵）</h3>
-      <ul class="list" id="ePass"></ul>
-      <div class="empty" id="ePassEmpty">まだありません</div>
       <h3>公開鍵</h3>
       <ul class="list" id="ePub"></ul>
       <div class="empty" id="ePubEmpty">まだありません</div>
@@ -276,8 +270,7 @@ table.cmp th,table.cmp td{border:1px solid var(--line);padding:6px 8px;text-alig
       <div class="modes">
         <button class="mode sel" data-mode="plain"><b>① 暗号化なし</b><small>そのまま送る</small></button>
         <button class="mode" data-mode="caesar"><b>② シーザー暗号</b><small>文字をずらす</small></button>
-        <button class="mode" data-mode="aes"><b>③ 共通鍵暗号</b><small>同じ合言葉で暗号化・復号</small></button>
-        <button class="mode" data-mode="rsa"><b>④ 公開鍵暗号</b><small>相手の公開鍵で暗号化</small></button>
+        <button class="mode" data-mode="rsa"><b>③ 公開鍵暗号</b><small>相手の公開鍵で暗号化</small></button>
       </div>
 
       <div class="keybox" data-panel="plain">
@@ -289,14 +282,6 @@ table.cmp th,table.cmp td{border:1px solid var(--line);padding:6px 8px;text-alig
           <div style="flex:0 1 160px"><label for="cShift">ずらす数（1〜25）</label><input id="cShift" type="number" min="1" max="25" value="3"></div>
           <div class="grow"><label>例：「あいうえお ABC」→</label><div class="mono" id="cShiftDemo" style="padding:10px 0"></div></div>
         </div>
-      </div>
-      <div class="keybox" data-panel="aes" hidden>
-        <p>暗号化と復号に<b>同じ合言葉（共通鍵）</b>を使います。受信者と同じ合言葉にしておこう。</p>
-        <div class="row">
-          <div class="grow"><label for="cPass">合言葉</label><input id="cPass" maxlength="40" autocomplete="off"></div>
-          <button class="btn-warn" id="cSendPass">合言葉をチャットで受信者に送る</button>
-        </div>
-        <p class="note" style="margin-top:6px">合言葉をチャットで送ると、ルータを通ります……。</p>
       </div>
       <div class="keybox" data-panel="rsa" hidden>
         <p><b>受信者</b>が鍵ペア（公開鍵と秘密鍵）を作り、<b>公開鍵だけ</b>をあなたに送ってくれます。あなたは、<b>受信者の公開鍵</b>で暗号化して送ります。</p>
@@ -317,14 +302,7 @@ table.cmp th,table.cmp td{border:1px solid var(--line);padding:6px 8px;text-alig
         </div>
       </div>
       <div class="keybox">
-        <h3 style="margin-top:0">③ 共通鍵暗号</h3>
-        <div class="row">
-          <div class="grow"><label for="rPass">合言葉</label><input id="rPass" maxlength="40" autocomplete="off"></div>
-        </div>
-        <p class="note" style="margin-top:6px">送信者と同じ合言葉にしておこう。</p>
-      </div>
-      <div class="keybox">
-        <h3 style="margin-top:0">④ 公開鍵暗号</h3>
+        <h3 style="margin-top:0">③ 公開鍵暗号</h3>
         <p class="note">ボタンを押すと、鍵ペア（公開鍵と秘密鍵）を作って、<b>公開鍵だけ</b>を送信者に送ります。秘密鍵はこのパソコンから出しません。</p>
         <div class="row"><button class="btn-main" id="cGenKey">🔑 鍵ペアを作って公開鍵を送信者に送る</button></div>
         <div id="cMyKeys" class="note" style="margin-top:6px">まだ作っていません</div>
@@ -355,8 +333,8 @@ const PREFIX = 'yic-crypto-taiken-v1-';
 const $ = s => document.querySelector(s);
 let peer = null;
 
-const TYPE_LABEL = { join: '接続要求', welcome: '接続許可（IP割当）', peer: '相手の情報', full: '満員', chat: 'メッセージ', key: '合言葉', pubkey: '公開鍵' };
-const MODE_LABEL = { plain: '① 暗号化なし', caesar: '② シーザー暗号', aes: '③ 共通鍵暗号', rsa: '④ 公開鍵暗号' };
+const TYPE_LABEL = { join: '接続要求', welcome: '接続許可（IP割当）', peer: '相手の情報', full: '満員', chat: 'メッセージ', pubkey: '公開鍵' };
+const MODE_LABEL = { plain: '① 暗号化なし', caesar: '② シーザー暗号', rsa: '③ 公開鍵暗号' };
 
 /* ---------- 共通 ---------- */
 function show(id){ document.querySelectorAll('.screen').forEach(e => e.hidden = (e.id !== id)); }
@@ -404,20 +382,6 @@ function caesar(text, k){
     return ch;
   }).join('');
 }
-// 共通鍵暗号：合言葉 → PBKDF2 → AES-256-GCM
-async function aesKey(pass, salt){
-  const base = await crypto.subtle.importKey('raw', te.encode(pass), 'PBKDF2', false, ['deriveKey']);
-  return crypto.subtle.deriveKey({ name: 'PBKDF2', salt, iterations: 100000, hash: 'SHA-256' }, base, { name: 'AES-GCM', length: 256 }, false, ['encrypt','decrypt']);
-}
-async function aesEncrypt(pass, text){
-  const salt = crypto.getRandomValues(new Uint8Array(16)), iv = crypto.getRandomValues(new Uint8Array(12));
-  const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, await aesKey(pass, salt), te.encode(text));
-  return { cipher: b64(ct), iv: b64(iv), salt: b64(salt) };
-}
-async function aesDecrypt(pass, d){
-  const pt = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: unb64(d.iv) }, await aesKey(pass, unb64(d.salt)), unb64(d.cipher));
-  return td.decode(pt);
-}
 // 公開鍵暗号：RSA-OAEP 2048
 const RSA = { name: 'RSA-OAEP', hash: 'SHA-256' };
 const RSA_MAX_BYTES = 190;
@@ -450,7 +414,7 @@ if(!window.crypto || !crypto.subtle){
 /* =========================================================
    盗聴者（ルータ）
    ========================================================= */
-const E = { ip: '', net: '', next: 2, comms: new Map(), rows: [], pass: new Set(), pubs: [] };
+const E = { ip: '', net: '', next: 2, comms: new Map(), rows: [], pubs: [] };
 const eLog = (cls, html) => addLog($('#eLog'), cls, html);
 
 function eRenderComms(){
@@ -460,8 +424,6 @@ function eRenderComms(){
   $('#eCount').textContent = list.length;
 }
 function eRenderKeys(){
-  $('#ePass').innerHTML = [...E.pass].map(p => `<li class="mono">${esc(p)}</li>`).join('');
-  $('#ePassEmpty').hidden = E.pass.size > 0;
   $('#ePub').innerHTML = E.pubs.map(p => `<li><span class="meta">${esc(p.from)} の公開鍵</span><code class="blk">${esc(shorten(p.key, 60))}</code></li>`).join('');
   $('#ePubEmpty').hidden = E.pubs.length > 0;
 }
@@ -515,39 +477,12 @@ function openCrack(no){
     box.innerHTML = head + `<p>暗号文：<code class="blk">${esc(c)}</code></p>` +
       `<p><b>総当たり攻撃</b>：ずらす数を1〜25まで全部試しました。<b>意味の通る文はどれ？</b>（番号＝ずらす数）</p><ol class="brute">${items.join('')}</ol>`;
   }
-  else if(r.mode === 'aes'){
-    box.innerHTML = head + `<p>暗号文：<code class="blk">${esc(shorten(r.raw.cipher, 120))}</code></p>` +
-      `<h3>盗み取った合言葉で試す</h3><div id="crkStolen" class="note">${E.pass.size ? '試しています…' : 'まだ合言葉を盗めていません。'}</div>` +
-      `<h3>合言葉を予想して試す</h3><div class="row"><div class="grow"><input id="crkGuess" maxlength="40" placeholder="予想した合言葉" autocomplete="off"></div><button class="btn-eve" id="crkTry">試す</button></div>` +
-      `<div id="crkGuessOut" style="margin-top:8px"></div>` +
-      `<p class="note" style="margin-top:8px">この暗号の鍵（256ビット）の組み合わせは約 10<sup>77</sup> 通り。1秒に1兆回試しても、宇宙の年齢より長くかかります。</p>`;
-    tryStolenPass(r);
-    $('#crkTry').addEventListener('click', () => tryGuess(r));
-    $('#crkGuess').addEventListener('keydown', e => { if(e.key === 'Enter' && !e.isComposing) tryGuess(r); });
-  }
   else if(r.mode === 'rsa'){
     box.innerHTML = head + `<p>暗号文：<code class="blk">${esc(shorten(r.raw.cipher, 120))}</code></p>` +
       `<h3>盗み取った公開鍵で復号してみる</h3><div id="crkRsa" class="note">${E.pubs.length ? '試しています…' : 'まだ公開鍵を盗めていません。'}</div>` +
       `<p class="note" style="margin-top:8px">復号に必要な<b>秘密鍵</b>は、一度もルータ（通信路）を通っていません。</p>`;
     tryRsa(r);
   }
-}
-async function tryStolenPass(r){
-  if(!E.pass.size) return;
-  const out = [];
-  for(const p of E.pass){
-    try{ const t = await aesDecrypt(p, r.raw); out.push(`<div>合言葉「<span class="mono">${esc(p)}</span>」→ <span class="okc">解読成功！</span>「<span class="plain-out">${esc(t)}</span>」</div>`); }
-    catch(e){ out.push(`<div>合言葉「<span class="mono">${esc(p)}</span>」→ <span class="fail">失敗</span></div>`); }
-  }
-  if(crackNo === r.no && $('#crkStolen')) $('#crkStolen').innerHTML = out.join('');
-}
-async function tryGuess(r){
-  const g = $('#crkGuess').value;
-  if(!g) return;
-  let html;
-  try{ const t = await aesDecrypt(g, r.raw); html = `<span class="okc">解読成功！</span>「<span class="plain-out">${esc(t)}</span>」`; eLog('err', `🔓 予想した合言葉でパケット No.${r.no} の解読に成功`); }
-  catch(e){ html = `<span class="fail">「${esc(g)}」では解読できませんでした。</span>`; }
-  $('#crkGuessOut').innerHTML = html;
 }
 async function tryRsa(r){
   if(!E.pubs.length) return;
@@ -629,10 +564,6 @@ function eHandle(conn, pkt){
   const to = [...E.comms.values()].find(c => c !== from);
   const clean = { src: from.ip, dst: to ? to.ip : String(pkt.dst), type: pkt.type, data: d };
   eRecord(clean);
-  if(pkt.type === 'key' && d.passphrase){
-    E.pass.add(String(d.passphrase).slice(0, 40)); eRenderKeys();
-    eLog('err', `🔑 合言葉「<span class="mono">${esc(d.passphrase)}</span>」を盗み取りました！`);
-  }
   if(pkt.type === 'pubkey' && d.publicKey){
     E.pubs.push({ from: `${from.name}（${from.ip}）`, key: String(d.publicKey) }); eRenderKeys();
     eLog('err', `🔑 ${esc(from.name)} さんの公開鍵を盗み取りました`);
@@ -645,7 +576,7 @@ function eHandle(conn, pkt){
   }
   if(to) to.conn.send(clean);
   else eLog('sys', '相手がまだいないので、届けられませんでした');
-  if(crackNo && (pkt.type === 'key' || pkt.type === 'pubkey')) openCrack(crackNo);   // 新しい鍵を盗んだら解読ルームを更新
+  if(crackNo && pkt.type === 'pubkey') openCrack(crackNo);   // 新しい鍵を盗んだら解読ルームを更新
 }
 $('#eStart').addEventListener('click', startRouter);
 $('#eStop').addEventListener('click', stopRouter);
@@ -755,18 +686,12 @@ async function cHandle(pkt){
     return;
   }
   const who = C.partner ? C.partner.name : '相手';
-  if(pkt.type === 'key'){
-    const p = String(d.passphrase || '').slice(0, 40);
-    const li = sysChat(`🔑 ${esc(who)} さんから合言葉「<span class="mono">${esc(p)}</span>」が届きました。 <button class="btn-ghost sm" data-usepass>この合言葉を使う</button>`);
-    li.querySelector('[data-usepass]').addEventListener('click', () => { $('#rPass').value = p; cLog('sys', '受け取った合言葉を設定しました'); });
-    return;
-  }
   if(pkt.type === 'pubkey'){
     try{
       C.partnerPub = await crypto.subtle.importKey('spki', unb64(String(d.publicKey)), RSA, false, ['encrypt']);
       C.partnerPubB64 = String(d.publicKey);
-      $('#cPeerPub').innerHTML = `<span class="okc">受け取りました</span><code class="blk">${esc(shorten(C.partnerPubB64, 60))}</code>④で送ると、この公開鍵で暗号化します。`;
-      sysChat(`🔑 ${esc(who)} さんから公開鍵が届きました。④公開鍵暗号で送れるようになりました。`);
+      $('#cPeerPub').innerHTML = `<span class="okc">受け取りました</span><code class="blk">${esc(shorten(C.partnerPubB64, 60))}</code>③で送ると、この公開鍵で暗号化します。`;
+      sysChat(`🔑 ${esc(who)} さんから公開鍵が届きました。③公開鍵暗号で送れるようになりました。`);
     }catch(e){ cLog('err', '公開鍵を読み込めませんでした'); }
     return;
   }
@@ -782,12 +707,6 @@ async function receiveChat(d, who){
       const k = Number($('#rShift').value) || 0;
       cipherShown = String(d.cipher || '');
       result = { ok: true, text: caesar(cipherShown, -k), note: `あなたの鍵（ずらす数 ${k}）で復号。読めなければ鍵が違うかも` };
-    }
-    else if(mode === 'aes'){
-      cipherShown = String(d.cipher || '');
-      const p = $('#rPass').value;
-      if(!p) result = { ok: false, text: '合言葉が設定されていないので読めません' };
-      else { try{ result = { ok: true, text: await aesDecrypt(p, d), note: 'あなたの合言葉で復号' }; } catch(e){ result = { ok: false, text: '合言葉が違うので読めません' }; } }
     }
     else if(mode === 'rsa'){
       cipherShown = String(d.cipher || '');
@@ -812,15 +731,10 @@ async function cSendChat(){
       if(!(k >= 1 && k <= 25)){ alert('ずらす数は1〜25にしてください'); return; }
       data = { mode: 'caesar', cipher: caesar(text, k) };
     }
-    else if(C.mode === 'aes'){
-      const p = $('#cPass').value;
-      if(!p){ alert('合言葉を入力してください'); $('#cPass').focus(); return; }
-      data = { mode: 'aes', ...(await aesEncrypt(p, text)) };
-    }
     else if(C.mode === 'rsa'){
       if(!C.partnerPub){ alert('受信者の公開鍵がまだ届いていません。受信者に「鍵ペアを作って公開鍵を送信者に送る」を押してもらおう。'); return; }
       const bytes = te.encode(text);
-      if(bytes.length > RSA_MAX_BYTES){ alert('④公開鍵暗号で一度に送れるのは全角60文字程度までです。短くしてください。'); return; }
+      if(bytes.length > RSA_MAX_BYTES){ alert('③公開鍵暗号で一度に送れるのは全角60文字程度までです。短くしてください。'); return; }
       data = { mode: 'rsa', cipher: b64(await crypto.subtle.encrypt(RSA, C.partnerPub, bytes)) };
     }
     cSend('chat', data);
@@ -867,14 +781,6 @@ function updateShiftDemo(){
 $('#cShift').addEventListener('input', updateShiftDemo);
 updateShiftDemo();
 
-$('#cSendPass').addEventListener('click', () => {
-  const p = $('#cPass').value;
-  if(!p){ alert('先に合言葉を入力してください'); return; }
-  if(!C.partner){ alert('まだ相手がいません'); return; }
-  if(!confirm('合言葉をチャットで送ります。このデータはルータを通ります。本当に送りますか？')) return;
-  try{ cSend('key', { passphrase: p }); sysChat(`🔑 合言葉「<span class="mono">${esc(p)}</span>」を相手に送りました。……ルータを通りました。`); cLog('warn', '合言葉をチャットで送りました'); }
-  catch(e){ cLog('err', '送れませんでした'); }
-});
 $('#cGenKey').addEventListener('click', async () => {
   if(!C.partner){ alert('まだ送信者がいません。送信者が接続してから押してください。'); return; }
   $('#cGenKey').disabled = true;
