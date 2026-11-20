@@ -41,6 +41,35 @@ button:disabled{opacity:.45;cursor:not-allowed}
 .btn-eve{background:var(--eve);color:#fff}
 .btn-warn{background:var(--warn);color:#fff}
 .btn-ghost{background:transparent;border:1px solid var(--line);color:var(--text);font-weight:400}
+/* 公開鍵暗号の流れ（南京錠のたとえ） */
+.pkf{border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-top:12px;background:var(--card)}
+.pkf-title{padding:8px 12px;font-weight:700;background:var(--bg);border-bottom:1px solid var(--line)}
+.pkf-head,.pkf-step{display:grid;grid-template-columns:2.4em 1fr 1.3fr 1fr}
+.pkf-head div{padding:6px 8px;font-weight:700;font-size:.85rem;text-align:center;color:var(--muted)}
+.pkf-head div.you{background:var(--me-soft);color:var(--me)}
+.pkf-step{border-top:1px solid var(--line);transition:background .4s}
+.pkf-step > div{padding:8px;font-size:.86rem;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;gap:2px}
+.pkf-step small{color:var(--muted);font-size:.78rem}
+.pkf-no{font-weight:800;font-size:1.15rem;color:var(--muted)}
+.pkf-step.now{background:var(--warn-soft)} .pkf-step.now .pkf-no{color:var(--warn)}
+.pkf-step.done .pkf-no{color:var(--ok)} .pkf-step.done .pkf-no::after{content:"✓";font-size:.9rem}
+.pkf-ic{font-size:1.6rem;line-height:1.25}
+.pkf-wire{position:relative;min-height:84px}
+.pkf-wire::before{content:"";position:absolute;left:6%;right:6%;top:26px;border-top:3px dashed var(--line)}
+.pkf-tok{position:absolute;top:10px;font-size:1.5rem;opacity:0;white-space:nowrap}
+.pkf-tok.go-r{animation:pkr 1.6s ease-in-out forwards}
+.pkf-tok.go-l{animation:pkl 1.6s ease-in-out forwards}
+@keyframes pkr{0%{left:4%;opacity:1}100%{left:calc(96% - 2.2rem);opacity:1}}
+@keyframes pkl{0%{left:calc(96% - 2.2rem);opacity:1}100%{left:4%;opacity:1}}
+.pkf-eve{margin-top:40px;font-size:.78rem;color:var(--eve)}
+.pkf-cap{grid-column:1 / -1;padding:0 12px 10px !important;align-items:flex-start !important;text-align:left !important}
+.pkf-msg{font-weight:700;color:var(--ok) !important;font-size:.85rem !important}
+@media (max-width:700px){
+  .pkf-head{display:none}
+  .pkf-step{grid-template-columns:2.2em 1fr}
+  .pkf-step > div.pkf-cell,.pkf-step > div.pkf-wire{grid-column:2}
+  .pkf-cell::before{content:attr(data-who);font-size:.75rem;color:var(--muted)}
+}
 :root[data-theme="dark"] .btn-main,:root[data-theme="dark"] .btn-eve,:root[data-theme="dark"] .btn-warn{color:#0b0d10}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .btn-main,:root:not([data-theme="light"]) .btn-eve,:root:not([data-theme="light"]) .btn-warn{color:#0b0d10}}
 input{font:inherit;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--text);width:100%}
@@ -145,7 +174,7 @@ table.cmp th,table.cmp td{border:1px solid var(--line);padding:6px 8px;text-alig
         <li><b>① 暗号化なし</b>：送信者がメッセージを送る。盗聴者の画面に何が見えるか？</li>
         <li><b>② シーザー暗号</b>：送信者と受信者で「ずらす数（鍵）」を<b>盗聴者に聞こえないように</b>決めて、それぞれ設定する。盗聴者は「解読」ボタンの<b>総当たり</b>で解けるか試す。</li>
         <li><b>②の続き</b>：鍵を盗聴者に知られないように相手に渡すには、どうすればよいか考える（<b>鍵配送問題</b>）。チャットで鍵を送ったら？</li>
-        <li><b>③ 公開鍵暗号</b>：受信者が「鍵ペアを作って公開鍵を送信者に送る」を押す。送信者は受信者の公開鍵で暗号化して送る。盗聴者は公開鍵を盗めるが、解読できるか？</li>
+        <li><b>③ 公開鍵暗号</b>：受信者が「鍵ペアを作って公開鍵を送信者に送る」を押す。送信者は受信者の公開鍵で暗号化して送る。盗聴者は公開鍵を盗めるが、解読できるか？ 3人とも画面の「<b>公開鍵暗号の流れ（南京錠のたとえ）</b>」の図で、①開いた南京錠（公開鍵）を渡す → ②南京錠で鍵をかけて送る → ③秘密鍵で開ける、の流れを確かめる。</li>
         <li>役割を交代して、もう一度体験する（3人全員が3つの役を体験できる）。</li>
       </ol>
       <p><b>3つの方式のまとめ</b></p>
@@ -227,6 +256,12 @@ table.cmp th,table.cmp td{border:1px solid var(--line);padding:6px 8px;text-alig
       <div class="empty" id="eEmpty" style="padding:10px">まだ通信はありません</div></div>
   </div>
 
+  <div class="card">
+    <h2>🔐 公開鍵暗号の流れ</h2>
+    <p class="muted" style="margin:0">送信者と受信者が③公開鍵暗号を使うと、この図が進みます。盗聴者のあなたには、何が見えて、何ができないかを確かめよう。</p>
+    <div data-pkflow="eve"></div>
+  </div>
+
   <div class="card" id="eCrack">
     <h2>🔓 解読ルーム</h2>
     <div id="eCrackBody" class="muted">上の表で、暗号化されたメッセージの「解読」ボタンを押そう。</div>
@@ -287,6 +322,7 @@ table.cmp th,table.cmp td{border:1px solid var(--line);padding:6px 8px;text-alig
         <p><b>受信者</b>が鍵ペア（公開鍵と秘密鍵）を作り、<b>公開鍵だけ</b>をあなたに送ってくれます。あなたは、<b>受信者の公開鍵</b>で暗号化して送ります。</p>
         <h3>受信者の公開鍵</h3>
         <div id="cPeerPub" class="note">まだ受け取っていません。受信者に「鍵ペアを作って公開鍵を送信者に送る」を押してもらおう。</div>
+        <div data-pkflow="sender"></div>
       </div>
     </div>
 
@@ -306,6 +342,7 @@ table.cmp th,table.cmp td{border:1px solid var(--line);padding:6px 8px;text-alig
         <p class="note">ボタンを押すと、鍵ペア（公開鍵と秘密鍵）を作って、<b>公開鍵だけ</b>を送信者に送ります。秘密鍵はこのパソコンから出しません。</p>
         <div class="row"><button class="btn-main" id="cGenKey">🔑 鍵ペアを作って公開鍵を送信者に送る</button></div>
         <div id="cMyKeys" class="note" style="margin-top:6px">まだ作っていません</div>
+        <div data-pkflow="receiver"></div>
       </div>
     </div>
 
@@ -385,6 +422,63 @@ function caesar(text, k){
 // 公開鍵暗号：RSA-OAEP 2048
 const RSA = { name: 'RSA-OAEP', hash: 'SHA-256' };
 const RSA_MAX_BYTES = 190;
+
+/* ---------- 公開鍵暗号の流れ（南京錠のたとえ） ---------- */
+// 公開鍵＝開いた南京錠（誰でも閉められる）、秘密鍵＝その南京錠を開ける鍵（受信者だけが持つ）
+const PKF_HTML = `
+<div class="pkf-title">🔐 公開鍵暗号の流れ（南京錠でたとえると）</div>
+<div class="pkf-head"><div></div><div data-col="receiver">📥 受信者</div><div data-col="eve">通り道（🕵️ 盗聴者＝ルータ）</div><div data-col="sender">📤 送信者</div></div>
+<div class="pkf-step" data-s="1">
+  <div class="pkf-no">①</div>
+  <div class="pkf-cell" data-who="📥 受信者"><span class="pkf-ic">🔓 🔑</span>開いた南京錠（公開鍵）と、それを開ける鍵（秘密鍵）を作る<small>🔑 鍵（秘密鍵）は自分の手元に残す</small></div>
+  <div class="pkf-wire"><span class="pkf-tok">🔓</span><span class="pkf-eve">🕵️ 開いた南京錠は見えるし、コピーもできる</span></div>
+  <div class="pkf-cell" data-who="📤 送信者"><span class="pkf-ic">🔓</span>受信者の開いた南京錠を受け取る</div>
+  <div class="pkf-cap">受信者が、<b>開いた状態の南京錠（公開鍵）</b>を送信者に渡す。南京錠は誰に見られてもかまわない。</div>
+</div>
+<div class="pkf-step" data-s="2">
+  <div class="pkf-no">②</div>
+  <div class="pkf-cell" data-who="📥 受信者"><span class="pkf-ic">📦🔒</span>鍵のかかった箱を受け取る</div>
+  <div class="pkf-wire"><span class="pkf-tok">📦🔒</span><span class="pkf-eve">🕵️ 箱は見えるが、鍵（秘密鍵）がないので開けられない</span></div>
+  <div class="pkf-cell" data-who="📤 送信者"><span class="pkf-ic">✉️ → 📦🔒</span>メッセージを箱に入れ、受け取った南京錠をパチンと閉める（暗号化）</div>
+  <div class="pkf-cap">送信者が、<b>受信者の南京錠（公開鍵）で鍵をかけて</b>送る。南京錠は、鍵を持っていなくても閉めることはできる。</div>
+</div>
+<div class="pkf-step" data-s="3">
+  <div class="pkf-no">③</div>
+  <div class="pkf-cell" data-who="📥 受信者"><span class="pkf-ic"><span class="pkf-lock">🔒</span> 🔑</span>手元の鍵（秘密鍵）で南京錠を開けて、メッセージを読む（復号）<small class="pkf-msg"></small></div>
+  <div class="pkf-wire"><span class="pkf-eve">🕵️ 開けられるのは、鍵（秘密鍵）を持つ受信者だけ</span></div>
+  <div class="pkf-cell" data-who="📤 送信者"><span class="pkf-ic">🚫</span>送信者も、閉めた箱はもう開けられない</div>
+  <div class="pkf-cap">受信者が、<b>自分だけが持つ鍵（秘密鍵）で南京錠を開ける</b>。秘密鍵は一度も通り道を通っていない。</div>
+</div>`;
+document.querySelectorAll('[data-pkflow]').forEach(box => {
+  box.classList.add('pkf');
+  box.innerHTML = PKF_HTML;
+  const col = box.querySelector(`[data-col="${box.dataset.pkflow}"]`);
+  if(col){ col.classList.add('you'); col.insertAdjacentText('beforeend', '（あなた）'); }
+});
+// 流れを n 番目まで進める（msg は③で読めたメッセージ）
+function pkfStep(n, msg){
+  document.querySelectorAll('.pkf').forEach(box => {
+    box.querySelectorAll('.pkf-step').forEach(st => {
+      const s = Number(st.dataset.s);
+      st.classList.toggle('now', s === n);
+      if(s < n) st.classList.add('done');
+      else st.classList.remove('done');
+    });
+    const st = box.querySelector(`.pkf-step[data-s="${n}"]`);
+    if(!st) return;
+    const tok = st.querySelector('.pkf-tok');
+    if(tok){ tok.classList.remove('go-r','go-l'); void tok.offsetWidth; tok.classList.add(n === 1 ? 'go-r' : 'go-l'); }
+    const lock = box.querySelector('.pkf-lock'), out = box.querySelector('.pkf-msg');
+    if(n === 3){
+      lock.textContent = '🔒';
+      setTimeout(() => { lock.textContent = '🔓'; }, 700);
+      out.textContent = msg ? `読めた！「${msg}」` : '';
+      setTimeout(() => { st.classList.remove('now'); st.classList.add('done'); }, 1400);
+    } else if(n < 3){
+      lock.textContent = '🔒'; out.textContent = '';
+    }
+  });
+}
 
 /* ---------- 画面切り替え ---------- */
 document.querySelectorAll('[data-back]').forEach(b => b.addEventListener('click', () => {
@@ -493,7 +587,7 @@ async function tryRsa(r){
       await crypto.subtle.decrypt(RSA, k, unb64(r.raw.cipher));
       out.push(`<div>${esc(p.from)} の公開鍵 → 解読成功（想定外）</div>`);
     }catch(e){
-      out.push(`<div>${esc(p.from)} の公開鍵 → <span class="fail">復号できません。公開鍵は「暗号化」専用で、「復号」には使えません。</span></div>`);
+      out.push(`<div>${esc(p.from)} の公開鍵 → <span class="fail">開けられません。</span>公開鍵は南京錠と同じで、<b>閉める（暗号化する）ことはできても、開ける（復号する）ことはできません</b>。開けられるのは、対になる秘密鍵だけです。公開鍵から秘密鍵を作り出すには、とても大きな数を素因数分解する必要があり、今のコンピュータでは現実的な時間ではできません。</div>`);
     }
   }
   if(crackNo === r.no && $('#crkRsa')) $('#crkRsa').innerHTML = out.join('');
@@ -567,7 +661,9 @@ function eHandle(conn, pkt){
   if(pkt.type === 'pubkey' && d.publicKey){
     E.pubs.push({ from: `${from.name}（${from.ip}）`, key: String(d.publicKey) }); eRenderKeys();
     eLog('err', `🔑 ${esc(from.name)} さんの公開鍵を盗み取りました`);
+    pkfStep(1);
   }
+  if(pkt.type === 'chat' && d.mode === 'rsa') pkfStep(2);
   if(pkt.type === 'chat'){
     const m = String(d.mode);
     eLog(m === 'plain' ? 'err' : 'sys', m === 'plain'
@@ -690,6 +786,7 @@ async function cHandle(pkt){
     try{
       C.partnerPub = await crypto.subtle.importKey('spki', unb64(String(d.publicKey)), RSA, false, ['encrypt']);
       C.partnerPubB64 = String(d.publicKey);
+      pkfStep(1);
       $('#cPeerPub').innerHTML = `<span class="okc">受け取りました</span><code class="blk">${esc(shorten(C.partnerPubB64, 60))}</code>③で送ると、この公開鍵で暗号化します。`;
       sysChat(`🔑 ${esc(who)} さんから公開鍵が届きました。③公開鍵暗号で送れるようになりました。`);
     }catch(e){ cLog('err', '公開鍵を読み込めませんでした'); }
@@ -717,6 +814,10 @@ async function receiveChat(d, who){
   }catch(e){ result = { ok: false, text: '読めませんでした' }; }
   addChat(false, who, mode, cipherShown, result);
   cLog('in', `💬 ${esc(who)} さんからメッセージ（${esc(MODE_LABEL[mode] || mode)}）`);
+  if(mode === 'rsa'){
+    pkfStep(2);
+    if(result.ok) setTimeout(() => pkfStep(3, result.text), 1800);
+  }
 }
 
 async function cSendChat(){
@@ -738,6 +839,7 @@ async function cSendChat(){
       data = { mode: 'rsa', cipher: b64(await crypto.subtle.encrypt(RSA, C.partnerPub, bytes)) };
     }
     cSend('chat', data);
+    if(C.mode === 'rsa') pkfStep(2);
   }catch(e){ cLog('err', '送信できませんでした'); return; }
   addChat(true, 'あなた', C.mode, data.cipher || '', { ok: true, text });
   cLog('out', `📨 ${esc(MODE_LABEL[C.mode])}で送信`);
@@ -796,6 +898,7 @@ $('#cGenKey').addEventListener('click', async () => {
     cSend('pubkey', { publicKey: C.myPub });
     sysChat('🔑 鍵ペアを作り、<b>公開鍵だけ</b>を送信者に送りました。（ルータにも見られています。秘密鍵は送っていません）');
     cLog('out', '公開鍵を送信者に送りました');
+    pkfStep(1);
     $('#cGenKey').textContent = '🔑 鍵ペアを作り直して公開鍵を送り直す';
   }catch(e){ $('#cMyKeys').textContent = '鍵ペアの作成または送信ができませんでした'; cLog('err', '公開鍵を送れませんでした'); }
   $('#cGenKey').disabled = false;
