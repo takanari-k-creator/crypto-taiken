@@ -891,8 +891,22 @@ $('#cGenKey').addEventListener('click', async () => {
     // ① 鍵ペア（公開鍵・秘密鍵）を作る
     C.keyPair = await crypto.subtle.generateKey({ ...RSA, modulusLength: 2048, publicExponent: new Uint8Array([1,0,1]) }, true, ['encrypt','decrypt']);
     C.myPub = b64(await crypto.subtle.exportKey('spki', C.keyPair.publicKey));
-    $('#cMyKeys').innerHTML = `<div><b>公開鍵</b>（誰に見られてもよい → 送信者に送りました）</div><code class="blk">${esc(shorten(C.myPub, 60))}</code>` +
-      `<div style="margin-top:6px"><b>秘密鍵</b>（このパソコンの中だけ。通信路には流しません）</div><code class="blk">🔒 ••••••••••••••••</code>`;
+    const myPriv = b64(await crypto.subtle.exportKey('pkcs8', C.keyPair.privateKey));
+    $('#cMyKeys').innerHTML =
+      `<div><b>🔓 公開鍵</b>（誰に見られてもよい → 送信者に送りました）全${C.myPub.length}文字</div>` +
+      `<code class="blk" style="max-height:110px;overflow:auto">${esc(C.myPub)}</code>` +
+      `<div style="margin-top:8px"><b>🔑 秘密鍵</b>（このパソコンの中だけ。通信路には流しません）全${myPriv.length}文字 ` +
+      `<button class="btn-ghost sm" id="cShowPriv">秘密鍵を表示</button></div>` +
+      `<code class="blk" id="cPrivKey" style="max-height:110px;overflow:auto">🔒 ••••••••••••••••</code>` +
+      `<div class="note" id="cPrivNote" hidden>⚠️ 秘密鍵は、人に見せたり送ったりしてはいけません。この画面は学習のために表示しています。<br>` +
+      `秘密鍵が公開鍵より長いのは、公開鍵の情報に加えて、鍵を作るのに使った<b>2つの大きな素数</b>などの秘密の数が入っているためです。</div>`;
+    $('#cShowPriv').addEventListener('click', () => {
+      const shown = $('#cPrivKey').dataset.shown === '1';
+      $('#cPrivKey').textContent = shown ? '🔒 ••••••••••••••••' : myPriv;
+      $('#cPrivKey').dataset.shown = shown ? '0' : '1';
+      $('#cPrivNote').hidden = shown;
+      $('#cShowPriv').textContent = shown ? '秘密鍵を表示' : '秘密鍵をかくす';
+    });
     cLog('sys', '鍵ペア（公開鍵・秘密鍵）を作りました');
     // ② 公開鍵だけを送信者に送る
     cSend('pubkey', { publicKey: C.myPub });
