@@ -896,9 +896,9 @@ $('#cGenKey').addEventListener('click', async () => {
       `<div><b>🔓 公開鍵</b>（誰に見られてもよい → 送信者に送りました）全${C.myPub.length}文字</div>` +
       `<code class="blk" style="max-height:110px;overflow:auto">${esc(C.myPub)}</code>` +
       `<div style="margin-top:8px"><b>🔑 秘密鍵</b>（このパソコンの中だけ。通信路には流しません）全${myPriv.length}文字 ` +
-      `<button class="btn-ghost sm" id="cShowPriv">秘密鍵を表示</button></div>` +
-      `<code class="blk" id="cPrivKey" style="max-height:110px;overflow:auto">🔒 ••••••••••••••••</code>` +
-      `<div class="note" id="cPrivNote" hidden>⚠️ 秘密鍵は、人に見せたり送ったりしてはいけません。この画面は学習のために表示しています。<br>` +
+      `<button class="btn-ghost sm" id="cShowPriv">秘密鍵をかくす</button></div>` +
+      `<code class="blk" id="cPrivKey" data-shown="1" style="max-height:110px;overflow:auto">${esc(myPriv)}</code>` +
+      `<div class="note" id="cPrivNote">⚠️ 秘密鍵は、人に見せたり送ったりしてはいけません。この画面は学習のために表示しています。<br>` +
       `秘密鍵が公開鍵より長いのは、公開鍵の情報に加えて、鍵を作るのに使った<b>2つの大きな素数</b>などの秘密の数が入っているためです。</div>`;
     $('#cShowPriv').addEventListener('click', () => {
       const shown = $('#cPrivKey').dataset.shown === '1';
